@@ -5,26 +5,89 @@ let rowsPerPage = 10;
 
 // ====== Head Logics ======
 
-// Update lesson count in Head
-function updateLessonCount() {
-  const countEl = document.getElementById("lesson-count");
-  countEl.textContent = `(${lessons.length})`;
+// Update game count in Head
+function updateGameCount() {
+  const countEl = document.getElementById("game-count");
+  countEl.textContent = `(${games.length})`;
 }
 
 // ====== Table Logics ======
 
-// Draw lesson bar
-function renderLessons() {
-  const tbody = document.getElementById("lesson-tbody");
+// Bind button actions
+function bindActions(row, game) {
+  row.querySelector(".edit").onclick = () => {
+    console.log("Edit", game.id);
+  };
+
+  row.querySelector(".copy").onclick = () => {
+    console.log("Duplicate", game.id);
+  };
+
+  row.querySelector(".delete").onclick = () => {
+    if (confirm("Delete this lesson?")) {
+      console.log("Delete", game.id);
+    }
+  };
+}
+
+// ====== Footer Logics ======
+
+function updateRowRange() {
+  const total = games.length;
+  const start = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+  const end = Math.min(currentPage * rowsPerPage, total);
+
+  document.getElementById("row-range").textContent =
+    `${start}–${end} of ${total}`;
+}
+
+function updateFooterButtons() {
+  const totalPages = Math.ceil(games.length / rowsPerPage);
+
+  document.getElementById("first-page").disabled = currentPage === 1;
+  document.getElementById("prev-page").disabled = currentPage === 1;
+  document.getElementById("next-page").disabled = currentPage === totalPages;
+  document.getElementById("last-page").disabled = currentPage === totalPages;
+}
+
+document.getElementById("first-page").onclick = () => {
+  currentPage = 1;
+  draw();
+};
+
+document.getElementById("prev-page").onclick = () => {
+  if (currentPage > 1) {
+    currentPage--;
+    draw();
+  }
+};
+
+document.getElementById("next-page").onclick = () => {
+  const totalPages = Math.ceil(games.length / rowsPerPage);
+  if (currentPage < totalPages) {
+    currentPage++;
+    draw();
+  }
+};
+
+document.getElementById("last-page").onclick = () => {
+  currentPage = Math.ceil(games.length / rowsPerPage);
+  draw();
+};
+
+// ====== Draw ======
+
+function draw() {
+  const tbody = document.getElementById("game-tbody");
   tbody.innerHTML = "";
 
-  // Find lessons in current page
+  // Find game rows in current page
   const start = (currentPage - 1) * rowsPerPage;
   const end = start + rowsPerPage;
-  const pageItems = lessons.slice(start, end);
+  const pageItems = games.slice(start, end);
 
-  // Create lesson bar
-  pageItems.forEach((lesson, index) => {
+  // Create game rows
+  pageItems.forEach((game, index) => {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
@@ -38,53 +101,24 @@ function renderLessons() {
         </div>
       </td>
 
-      <td>${lesson.number}</td>
-      <td>${lesson.title}</td>
-      <td>${lesson.author}</td>
-      <td>${lesson.activities}</td>
-      <td>${lesson.updatedAt}</td>
-      <td>${lesson.updatedBy}</td>
+      <td>${game.number}</td>
+      <td>${game.title}</td>
+      <td>${game.author}</td>
+      <td>${game.activities}</td>
+      <td>${game.updatedAt}</td>
+      <td>${game.updatedBy}</td>
     `;
 
-    bindActions(tr, lesson);
+    bindActions(tr, game);
     tbody.appendChild(tr);
   });
 
-  // Update lesson count
-  updateLessonCount();
+  // Update UI
+  updateGameCount();
   updateRowRange();
   updateFooterButtons();
 }
 
-// Bind button actions
-function bindActions(row, lesson) {
-  row.querySelector(".edit").onclick = () => {
-    console.log("Edit", lesson.id);
-  };
-
-  row.querySelector(".copy").onclick = () => {
-    console.log("Duplicate", lesson.id);
-  };
-
-  row.querySelector(".delete").onclick = () => {
-    if (confirm("Delete this lesson?")) {
-      console.log("Delete", lesson.id);
-    }
-  };
-}
-
-// ====== Footer Logics ======
-
-function updateRowRange() {
-  const total = lessons.length;
-  const start = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-  const end = Math.min(currentPage * rowsPerPage, total);
-
-  document.getElementById("row-range").textContent =
-    `${start}–${end} of ${total}`;
-}
-
-
 // ====== Execution ======
 
-renderLessons();
+draw();

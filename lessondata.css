@@ -1,57 +1,43 @@
-/*#region ====== Head ====== */
+/*#region ====== Header ====== */
 
-#lesson-header {
+#header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
 }
 
-#lesson-title h2 {
+#header-title h2 {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
 }
 
-#lesson-count {
+#game-count {
   font-weight: normal;
   color: #888;
   margin-left: 4px;
-}
-
-#add-lesson-btn {
-  padding: 8px 14px;
-  border-radius: 6px;
-  border: none;
-  background: #6b5cff;
-  color: white;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-#add-lesson-btn:hover {
-  opacity: 0.9;
 }
 
 /*#endregion */
 
 /*#region ====== Table ====== */
 
-#lesson-table {
+#game-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
 }
 
-#lesson-table th,
-#lesson-table td {
+#game-table th,
+#game-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #eee;
   font-size: 14px;
 }
 
-#lesson-table tbody tr:hover {
+#game-table tbody tr:hover {
   background: #fafafa;
 }
 
