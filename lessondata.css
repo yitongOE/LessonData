@@ -1,0 +1,125 @@
+/*#region ====== Head ====== */
+
+#lesson-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+#lesson-title h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+#lesson-count {
+  font-weight: normal;
+  color: #888;
+  margin-left: 4px;
+}
+
+#add-lesson-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #6b5cff;
+  color: white;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+#add-lesson-btn:hover {
+  opacity: 0.9;
+}
+
+/*#endregion */
+
+/*#region ====== Table ====== */
+
+#lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+#lesson-table th,
+#lesson-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+#lesson-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.action-btn.edit { color: #6b5cff; }
+.action-btn.copy { color: #6b5cff; }
+.action-btn.delete { color: #e5484d; }
+
+.action-btn:hover {
+  opacity: 0.7;
+}
+
+/*#endregion */
+
+/*#region ====== Footer ====== */
+#footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 8px;
+  font-size: 13px;
+  color: #777;
+}
+
+.footer-left,
+.footer-middle,
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#rows-per-page {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+}
+
+.page-icon {
+  border: none;
+  background: transparent;
+  color: #777;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.page-icon:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.page-icon:hover:not(:disabled) {
+  color: #6b5cff;
+}
+
+/*#endregion */
