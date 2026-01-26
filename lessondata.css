@@ -1,0 +1,37 @@
+#lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+#lesson-table th,
+#lesson-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+  font-size: 14px;
+}
+
+#lesson-table tbody tr:hover {
+  background: #fafafa;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.action-btn.edit { color: #6b5cff; }
+.action-btn.copy { color: #6b5cff; }
+.action-btn.delete { color: #e5484d; }
+
+.action-btn:hover {
+  opacity: 0.7;
+}
