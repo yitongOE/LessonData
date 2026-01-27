@@ -4,7 +4,7 @@ const games = [
     number: "v1.0.0",
     title: "Word Splash",
     author: "John Doe",
-    activities: 0,
+    activities: 6,
     updatedAt: "1/23/2026",
     updatedBy: "-"
   },
@@ -13,7 +13,7 @@ const games = [
     number: "v1.0.0",
     title: "Sentence Scramble",
     author: "John Doe",
-    activities: 0,
+    activities: 6,
     updatedAt: "1/22/2026",
     updatedBy: "-"
   },
@@ -22,7 +22,7 @@ const games = [
     number: "v1.0.0",
     title: "Bubble Pop",
     author: "John Doe",
-    activities: 3,
+    activities: 6,
     updatedAt: "1/24/2026",
     updatedBy: "-"
   },
