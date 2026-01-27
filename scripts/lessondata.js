@@ -15,19 +15,31 @@ function updateGameCount() {
 
 // Bind button actions
 function bindActions(row, game) {
+  // Edit
   row.querySelector(".edit").onclick = () => {
     console.log("Edit", game.id);
   };
 
+  // Duplicate
   row.querySelector(".copy").onclick = () => {
     console.log("Duplicate", game.id);
   };
 
+  // Delete
   row.querySelector(".delete").onclick = () => {
     if (confirm("Delete this lesson?")) {
       console.log("Delete", game.id);
     }
   };
+
+  // Switch active/inactive
+  const toggle = row.querySelector('.switch-yn input');
+  if (toggle) {
+    toggle.onchange = () => {
+      game.active = toggle.checked;
+      console.log("Game active changed:", game.id, game.active);
+    };
+  }
 }
 
 // ====== Footer Logics ======
@@ -91,8 +103,9 @@ function draw() {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td>${index + 1}</td>
+      <td>${start + index + 1}</td>
 
+      <!-- Actions -->
       <td>
         <div class="actions">
           <button class="action-btn edit" title="Edit">✏️</button>
@@ -101,17 +114,35 @@ function draw() {
         </div>
       </td>
 
+      <!-- Version -->
       <td>${game.number}</td>
+
+      <!-- Title -->
       <td>${game.title}</td>
-      <td>${game.author}</td>
-      <td>${game.activities}</td>
+
+      <!-- Active -->
+      <td>
+        <label class="switch-yn">
+          <input type="checkbox" ${game.active ? "checked" : ""}>
+          <span class="switch-track">
+            <span class="switch-label yes">YES</span>
+            <span class="switch-label no">NO</span>
+            <span class="switch-thumb"></span>
+          </span>
+        </label>
+      </td>
+
+      <!-- Levels -->
+      <td>${game.levels}</td>
+
+      <!-- Updated -->
       <td>${game.updatedAt}</td>
       <td>${game.updatedBy}</td>
     `;
 
     bindActions(tr, game);
-    tbody.appendChild(tr);
-  });
+    tbody.appendChild(tr); 
+  })
 
   // Update UI
   updateGameCount();
