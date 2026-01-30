@@ -2,8 +2,9 @@
 
 let currentPage = 1;
 let rowsPerPage = 10;
+let pendingAction = null;
 
-// ====== Head Logics ======
+//#region ====== Head Logics ======
 
 // Update game count in Head
 function updateGameCount() {
@@ -11,25 +12,46 @@ function updateGameCount() {
   countEl.textContent = `(${games.length})`;
 }
 
-// ====== Table Logics ======
+//#endregion
+
+//#region ====== Table Logics ======
 
 // Bind button actions
 function bindActions(row, game) {
   // Edit
   row.querySelector(".edit").onclick = () => {
-    console.log("Edit", game.id);
+    openActionModal({
+      title: "Modify Game",
+      desc: "You are about to modify this game. This change will take effect immediately.",
+      onConfirm: () => {
+        console.log("Edit", game.id);
+      }
+    });
   };
 
-  // Duplicate
-  row.querySelector(".copy").onclick = () => {
-    console.log("Duplicate", game.id);
+  // Restore
+  row.querySelector(".restore").onclick = () => {
+    openActionModal({
+      title: "Restore Latest Safe Version",
+      desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
+      onConfirm: () => {
+        console.log("Restore latest safe version:", game.id);
+
+        // TODO: Get file
+        // restoreGameToLatestSafeVersion(game.id);
+      }
+    });
   };
 
   // Delete
   row.querySelector(".delete").onclick = () => {
-    if (confirm("Delete this lesson?")) {
-      console.log("Delete", game.id);
-    }
+    openActionModal({
+      title: "Delete Game",
+      desc: "This action cannot be undone. The deletion takes effect immediately.",
+      onConfirm: () => {
+        console.log("Delete", game.id);
+      }
+    });
   };
 
   // Switch active/inactive
@@ -42,7 +64,9 @@ function bindActions(row, game) {
   }
 }
 
-// ====== Footer Logics ======
+//#endregion
+
+//#region ====== Footer Logics ======
 
 function updateRowRange() {
   const total = games.length;
@@ -87,6 +111,8 @@ document.getElementById("last-page").onclick = () => {
   draw();
 };
 
+//#endregion
+
 // ====== Draw ======
 
 function draw() {
@@ -109,7 +135,7 @@ function draw() {
       <td>
         <div class="actions">
           <button class="action-btn edit" title="Edit">✏️</button>
-          <button class="action-btn copy" title="Duplicate">📄</button>
+          <button class="action-btn restore" title="Restore">📄</button>
           <button class="action-btn delete" title="Delete">🗑️</button>
         </div>
       </td>
@@ -149,6 +175,46 @@ function draw() {
   updateRowRange();
   updateFooterButtons();
 }
+
+//#region ====== Action Confirmation Models ======
+
+// Open a popup window when click on action buttons
+function openActionModal({ title, desc, onConfirm }) {
+  const modal = document.getElementById("action-modal");
+  const passwordInput = document.getElementById("modal-password");
+  const awareCheckbox = document.getElementById("modal-aware");
+  const confirmBtn = document.getElementById("modal-confirm");
+
+  document.getElementById("modal-title").textContent = title;
+  document.getElementById("modal-desc").textContent = desc;
+
+  passwordInput.value = "";
+  awareCheckbox.checked = false;
+  confirmBtn.disabled = true;
+
+  modal.classList.remove("hidden");
+
+  const updateConfirmState = () => {
+    confirmBtn.disabled =
+      passwordInput.value.length === 0 || !awareCheckbox.checked;
+  };
+
+  passwordInput.oninput = updateConfirmState;
+  awareCheckbox.onchange = updateConfirmState;
+
+  pendingAction = onConfirm;
+}
+
+document.getElementById("modal-cancel").onclick = () => {
+  document.getElementById("action-modal").classList.add("hidden");
+};
+
+document.getElementById("modal-confirm").onclick = () => {
+  document.getElementById("action-modal").classList.add("hidden");
+  if (pendingAction) pendingAction();
+};
+
+//#endregion
 
 // ====== Execution ======
 

@@ -63,6 +63,37 @@
       </div>
     </div>
 
+    <!-- ====== Action Confirmation Modal ====== -->
+    <div id="action-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+
+      <div class="modal-card">
+        <h3 id="modal-title">Confirm Action</h3>
+
+        <p id="modal-desc" class="modal-desc"></p>
+
+        <!-- Password -->
+        <input
+          type="password"
+          id="modal-password"
+          placeholder="Enter admin password"
+        />
+
+        <!-- Awareness -->
+        <label class="modal-awareness">
+          <input type="checkbox" id="modal-aware" />
+          I understand this change will immediately affect the live experience for users.
+        </label>
+
+        <!-- Buttons -->
+        <div class="modal-actions">
+          <button id="modal-cancel">Cancel</button>
+          <button id="modal-confirm" class="danger" disabled>
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
 
     <!-- ====== Scripts ====== -->
     <script src="scripts/games.js"></script>
