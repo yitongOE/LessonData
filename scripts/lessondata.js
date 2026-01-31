@@ -1,5 +1,7 @@
 // ====== Variables ======
 
+const ADMIN_PASSWORD = "admin123";
+
 let currentPage = 1;
 let rowsPerPage = 10;
 let pendingAction = null;
@@ -184,6 +186,8 @@ function openActionModal({ title, desc, onConfirm }) {
   const passwordInput = document.getElementById("modal-password");
   const awareCheckbox = document.getElementById("modal-aware");
   const confirmBtn = document.getElementById("modal-confirm");
+  const errorEl = document.getElementById("modal-password-error");
+  
 
   document.getElementById("modal-title").textContent = title;
   document.getElementById("modal-desc").textContent = desc;
@@ -193,10 +197,13 @@ function openActionModal({ title, desc, onConfirm }) {
   confirmBtn.disabled = true;
 
   modal.classList.remove("hidden");
+  errorEl.classList.add("hidden");
 
   const updateConfirmState = () => {
-    confirmBtn.disabled =
-      passwordInput.value.length === 0 || !awareCheckbox.checked;
+    const hasPassword = passwordInput.value.length > 0;
+    const awareOk = awareCheckbox.checked;
+    confirmBtn.disabled = !(hasPassword && awareOk);
+    errorEl.classList.add("hidden");
   };
 
   passwordInput.oninput = updateConfirmState;
@@ -210,8 +217,21 @@ document.getElementById("modal-cancel").onclick = () => {
 };
 
 document.getElementById("modal-confirm").onclick = () => {
+  const passwordInput = document.getElementById("modal-password");
+  const errorEl = document.getElementById("modal-password-error");
+
+  if (passwordInput.value !== ADMIN_PASSWORD) {
+    errorEl.classList.remove("hidden");
+    return;
+  }
+
   document.getElementById("action-modal").classList.add("hidden");
   if (pendingAction) pendingAction();
+};
+
+document.getElementById("toggle-password").onclick = () => {
+  const input = document.getElementById("modal-password");
+  input.type = input.type === "password" ? "text" : "password";
 };
 
 //#endregion

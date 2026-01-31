@@ -73,11 +73,24 @@
         <p id="modal-desc" class="modal-desc"></p>
 
         <!-- Password -->
-        <input
-          type="password"
-          id="modal-password"
-          placeholder="Enter admin password"
-        />
+        <div class="password-wrapper">
+          <input
+            type="password"
+            id="modal-password"
+            placeholder="Enter admin password"
+          />
+          <button
+            type="button"
+            id="toggle-password"
+            class="toggle-password"
+            title="Show password"
+          >
+            👁
+          </button>
+        </div>
+        <div id="modal-password-error" class="modal-error hidden">
+          Incorrect password.
+        </div>
 
         <!-- Awareness -->
         <label class="modal-awareness">
