@@ -137,7 +137,7 @@ function draw() {
       <td>
         <div class="actions">
           <button class="action-btn edit" title="Edit">✏️</button>
-          <button class="action-btn restore" title="Restore">📄</button>
+          <button class="action-btn restore" title="Restore">🔄</button>
           <button class="action-btn delete" title="Delete">🗑️</button>
         </div>
       </td>
@@ -187,12 +187,16 @@ function openActionModal({ title, desc, onConfirm }) {
   const awareCheckbox = document.getElementById("modal-aware");
   const confirmBtn = document.getElementById("modal-confirm");
   const errorEl = document.getElementById("modal-password-error");
+  const passwordText = document.getElementById("modal-password-text");
   
   document.getElementById("modal-title").textContent = title;
   document.getElementById("modal-desc").textContent = desc;
 
   // Reset password zone
   passwordInput.value = "";
+  passwordText.value = "";
+  passwordInput.classList.remove("is-hidden");
+  passwordText.classList.add("is-hidden");
   passwordInput.type = "password";
   const toggleBtn = document.getElementById("toggle-password");
   toggleBtn.setAttribute("data-visible", "false");
@@ -234,17 +238,43 @@ document.getElementById("modal-confirm").onclick = () => {
 };
 
 document.getElementById("toggle-password").onclick = () => {
-  const input = document.getElementById("modal-password");
+  const hidden = document.getElementById("modal-password");
+  const text = document.getElementById("modal-password-text");
   const btn = document.getElementById("toggle-password");
 
-  const isVisible = input.type === "text";
+  const showing = btn.getAttribute("data-visible") === "true";
 
-  input.type = isVisible ? "password" : "text";
-  btn.setAttribute("data-visible", String(!isVisible));
+  if (showing) {
+    // switch to hidden (password)
+    text.classList.add("is-hidden");
+    hidden.classList.remove("is-hidden");
+    hidden.focus();
+    hidden.selectionStart = hidden.selectionEnd = hidden.value.length;
+    btn.setAttribute("data-visible", "false");
+  } else {
+    // switch to visible (text)
+    hidden.classList.add("is-hidden");
+    text.classList.remove("is-hidden");
+    text.focus();
+    text.selectionStart = text.selectionEnd = text.value.length;
+    btn.setAttribute("data-visible", "true");
+  }
 };
+
+const pwHidden = document.getElementById("modal-password");
+const pwText = document.getElementById("modal-password-text");
+
+// Keep values in sync
+pwHidden.addEventListener("input", () => {
+  pwText.value = pwHidden.value;
+});
+pwText.addEventListener("input", () => {
+  pwHidden.value = pwText.value;
+});
 
 //#endregion
 
 // ====== Execution ======
 
 draw();
+
