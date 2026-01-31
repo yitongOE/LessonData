@@ -63,6 +63,66 @@
       </div>
     </div>
 
+    <!-- ====== Action Confirmation Modal ====== -->
+    <div id="action-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+
+      <div class="modal-card">
+        <div class="modal-content">
+          <h3 id="modal-title">Confirm Action</h3>
+          <p id="modal-desc" class="modal-desc"></p>
+
+          <!-- Password -->
+          <div class="password-wrapper">
+            <!-- Hidden (password) -->
+            <input
+              type="password"
+              id="modal-password"
+              class="password-field"
+              placeholder="Enter admin password"
+              autocomplete="current-password"
+            />
+
+            <!-- Visible (text) -->
+            <input
+              type="text"
+              id="modal-password-text"
+              class="password-field is-hidden"
+              placeholder="Enter admin password"
+              autocomplete="off"
+            />
+
+            <button
+              type="button"
+              id="toggle-password"
+              class="toggle-password"
+              aria-label="Toggle password visibility"
+              data-visible="false"
+            >
+              <span class="icon-eye">👁</span>
+              <span class="icon-eye-off">⌣</span>
+            </button>
+          </div>
+          <div id="modal-password-error" class="modal-error hidden">
+            Incorrect password.
+          </div>
+
+          <!-- Awareness -->
+          <label class="modal-awareness">
+            <input type="checkbox" id="modal-aware" />
+            I understand this change will immediately affect the real-time game experience for all users.
+          </label>
+
+          <!-- Buttons -->
+          <div class="modal-actions">
+            <button id="modal-cancel">Cancel</button>
+            <button id="modal-confirm" class="danger" disabled>
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ====== Scripts ====== -->
     <script src="scripts/games.js"></script>
