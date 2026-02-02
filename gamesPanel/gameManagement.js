@@ -1,16 +1,13 @@
 // ====== Variables ======
+currentPage = 1;
+rowsPerPage = 10;
+pendingAction = null;
 
-const ADMIN_PASSWORD = "admin123";
-
-let currentPage = 1;
-let rowsPerPage = 10;
-let pendingAction = null;
-
-//#region ====== Head Logics ======
+//#region ====== Header Logics ======
 
 // Update game count in Head
 function updateGameCount() {
-  const countEl = document.getElementById("game-count");
+  const countEl = document.getElementById("item-count");
   countEl.textContent = `(${games.length})`;
 }
 
@@ -118,7 +115,7 @@ document.getElementById("last-page").onclick = () => {
 // ====== Draw ======
 
 function draw() {
-  const tbody = document.getElementById("game-tbody");
+  const tbody = document.getElementById("item-tbody");
   tbody.innerHTML = "";
 
   // Find game rows in current page
@@ -276,5 +273,6 @@ pwText.addEventListener("input", () => {
 
 // ====== Execution ======
 
-draw();
+panel = new URLSearchParams(location.search).get("panel") || "games";
+if (panel === "games") draw();
 

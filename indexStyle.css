@@ -41,7 +41,7 @@ body {
   font-weight: 600;
 }
 
-#game-count {
+#item-count {
   margin-left: 6px;
   font-size: 14px;
   color: var(--text-muted);
@@ -69,25 +69,25 @@ body {
 
 /*#region ====== Table ====== */
 
-#game-table {
+#item-table {
   width: 100%;
   border-collapse: collapse;
   background: white;
 }
 
-#game-table thead tr {
+#item-table thead tr {
   background: var(--bg-header);
 }
 
-#game-table th,
-#game-table td {
+#item-table th,
+#item-table td {
   padding: 12px;
   font-size: 14px;
   text-align: left;
   border-bottom: 1px solid var(--border-light);
 }
 
-#game-table th {
+#item-table th {
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
@@ -95,12 +95,8 @@ body {
   color: var(--text-muted);
 }
 
-#game-table tbody tr:hover {
+#item-table tbody tr:hover {
   background: #f6f7fb;
-}
-
-#game-table td:nth-child(5) {
-  text-align: center;
 }
 
 /*#endregion */
