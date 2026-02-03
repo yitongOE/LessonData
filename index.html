@@ -143,48 +143,10 @@
     </div>
 
     <!-- ====== Scripts ====== -->
+    <script src="indexUI.js"></script>
     <script src="gamesPanel/games.js"></script>
     <script src="gamesPanel/gamesManagement.js"></script>
     <script src="adminsPanel/admins.js"></script>
     <script src="adminsPanel/adminsManagement.js"></script>
-    
-    <script>
-      // Variables
-      const ADMIN_PASSWORD = "admin123";
-      let currentPage = 1;
-      let rowsPerPage = 10;
-      let pendingAction = null;
-      
-      // Toggle panel button
-      const panel = new URLSearchParams(location.search).get("panel") || "games";
-      const togglePanelBtn = document.getElementById("panel-toggle-btn");
-      const headerTitle = document.getElementById("header-title-text");
-      const itemCount = document.getElementById("item-count");
-      const theadGames = document.getElementById("thead-games");
-      const theadAdmin = document.getElementById("thead-admins");
-
-
-      if (panel === "games") {
-        togglePanelBtn.textContent = "Admins Management";
-        togglePanelBtn.onclick = () => {
-          location.href = "index.html?panel=admins";
-        };
-        document.title = "Our English - Games Management";
-        headerTitle.textContent = "Games ";
-        itemCount.textContent = `(${games.length})`;
-        theadGames.classList.remove("hidden");
-        theadAdmin.classList.add("hidden");
-      } else {
-        togglePanelBtn.textContent = "Games Management";
-        togglePanelBtn.onclick = () => {
-          location.href = "index.html?panel=games";
-        };
-        document.title = "Our English - Admins Management";
-        headerTitle.textContent = "Admins ";
-        itemCount.textContent = `(${admins.length})`;
-        theadGames.classList.add("hidden");
-        theadAdmin.classList.remove("hidden");
-      }
-    </script>
   </body>
 </html>
