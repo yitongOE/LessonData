@@ -1,4 +1,4 @@
-LevelCount,VersionNumber,isActive
-1,V1.0.1,true
-3,25000,true
-4,-250,true
+GameName,LevelCount,VersionNumber,isActive
+SentenceBuilder,1,V1.0.1,true
+WordSplash,3,25000,true
+GrammarPop,4,-250,true
