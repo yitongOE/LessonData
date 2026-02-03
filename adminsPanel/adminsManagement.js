@@ -220,5 +220,11 @@ document.getElementById("modal-confirm").onclick = () => {
 
 // ====== Init ======
 
-panel = new URLSearchParams(location.search).get("panel") || "games";
-if (panel === "admins") draw();
+currentPanel = setupIndexUI({
+  adminsCount: admins.length
+});
+
+if (currentPanel === PANEL.ADMINS) {
+  draw();
+}
+
