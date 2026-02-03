@@ -30,7 +30,7 @@
 
       return {
         id: Number(raw.id),
-        number: raw.number,
+        version: raw.version,
         title: raw.title,
         active: raw.active === "true",
         levels: Number(raw.levels),
@@ -68,7 +68,7 @@
       </td>
 
       <!-- Version -->
-      <td>${game.number}</td>
+      <td>${game.version}</td>
 
       <!-- Title -->
       <td>${game.title}</td>
@@ -102,7 +102,21 @@
         title: "Modify Game",
         desc: "You are about to modify this game. This change will take effect immediately.",
         onConfirm: () => {
-          console.log("Edit", game.id);
+          openEditModal({
+            title: `Edit Game #${game.id}`,
+            data: game,
+            fields: [
+              { key: "version", label: "Version" },
+              { key: "title", label: "Title" },
+              { key: "active", label: "Active", type: "checkbox" },
+              { key: "levels", label: "Levels", type: "number" },
+              { key: "updatedAt", label: "Last Updated"},
+              { key: "updatedBy", label: "Updated By"},
+            ],
+            onSave: () => {
+              drawGames();
+            }
+          });
         }
       });
     };
@@ -128,6 +142,7 @@
         desc: "This action cannot be undone. The deletion takes effect immediately.",
         onConfirm: () => {
           console.log("Delete", game.id);
+          //TODO
         }
       });
     };

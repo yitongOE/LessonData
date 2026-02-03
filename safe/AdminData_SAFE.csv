@@ -1,0 +1,5 @@
+id,username,firstname,lastname,email,role,active
+1,joshandres,Josh,Andres,JoshA@OurEnglishInc.com,Admin,true
+2,whitneykluttz,Whitney,Kluttz,WhitneyK@OurEnglishInc.com,QA,true
+3,yitonghu,Yitong,Hu,YitongH@OurEnglishInc.com,Guest,true
+4,johanserrato,Johan,Serrato,jromero@OurEnglish.ai,Guest,false

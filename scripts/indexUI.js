@@ -187,3 +187,71 @@ function openActionModal({ title, desc, onConfirm }) {
   };
 
   //#endregion
+
+//#region ====== Edit Modal ======
+
+let editingTarget = null;
+let draftData = null;
+
+function openEditModal({ title, data, fields, onSave }) {
+  editingTarget = data;
+  draftData = structuredClone(data);
+
+  const modal = document.getElementById("edit-modal");
+  const form = document.getElementById("edit-form");
+
+  document.getElementById("edit-modal-title").textContent = title;
+  form.innerHTML = "";
+
+  fields.forEach(field => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "edit-field";
+
+    const label = document.createElement("label");
+    label.textContent = field.label;
+
+    let input;
+
+    if (field.type === "checkbox") {
+      input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = draftData[field.key];
+      input.onchange = e => {
+        draftData[field.key] = e.target.checked;
+      };
+    } else {
+      input = document.createElement("input");
+      input.type = field.type || "text";
+      input.value = draftData[field.key] ?? "";
+      input.oninput = e => {
+        draftData[field.key] = e.target.value;
+      };
+    }
+
+    label.appendChild(input);
+    wrapper.appendChild(label);
+    form.appendChild(wrapper);
+  });
+
+  modal.classList.remove("hidden");
+
+  // Discard editing
+  document.getElementById("edit-cancel").onclick = () => {
+    closeEditModal();
+  };
+
+  // Save editing
+  document.getElementById("edit-save").onclick = () => {
+    Object.assign(editingTarget, draftData);
+    closeEditModal();
+    if (onSave) onSave(editingTarget);
+  };
+}
+
+function closeEditModal() {
+  document.getElementById("edit-modal").classList.add("hidden");
+  editingTarget = null;
+  draftData = null;
+}
+
+//#endregion
