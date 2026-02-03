@@ -273,6 +273,10 @@ pwText.addEventListener("input", () => {
 
 // ====== Execution ======
 
-panel = new URLSearchParams(location.search).get("panel") || "games";
-if (panel === "games") draw();
+currentPanel = setupIndexUI({
+  gamesCount: games.length
+});
 
+if (currentPanel === PANEL.GAMES) {
+  draw();
+}
