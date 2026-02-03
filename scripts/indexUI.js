@@ -215,10 +215,28 @@ function openEditModal({ title, data, fields, onSave }) {
     if (field.type === "checkbox") {
       input = document.createElement("input");
       input.type = "checkbox";
-      input.checked = draftData[field.key];
+      input.checked = !!draftData[field.key];
       input.onchange = e => {
         draftData[field.key] = e.target.checked;
       };
+
+    } else if (field.type === "select") {
+      input = document.createElement("select");
+
+      field.options.forEach(option => {
+        const opt = document.createElement("option");
+        opt.value = option;
+        opt.textContent = option;
+        if (option === draftData[field.key]) {
+          opt.selected = true;
+        }
+        input.appendChild(opt);
+      });
+
+      input.onchange = e => {
+        draftData[field.key] = e.target.value;
+      };
+
     } else {
       input = document.createElement("input");
       input.type = field.type || "text";

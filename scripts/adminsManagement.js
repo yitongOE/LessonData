@@ -113,7 +113,21 @@
         title: "Modify Admin",
         desc: "You are about to modify this admin account. This change will take effect immediately.",
         onConfirm: () => {
-          console.log("Edit admin:", admin.id);
+          openEditModal({
+            title: `Edit Admin`,
+            data: admin,
+            fields: [
+              { key: "username", label: "Username" },
+              { key: "firstname", label: "First Name" },
+              { key: "lastname", label: "Last Name" },
+              { key: "email", label: "Email" },
+              { key: "role", label: "Role", type: "select", options: ["Admin", "QA", "Guest"] },
+              { key: "active", label: "Active", type: "checkbox" }
+            ],
+            onSave: () => {
+              drawAdmins();
+            }
+          });
         }
       });
     };
@@ -125,6 +139,7 @@
         desc: "This action cannot be undone. The deletion takes effect immediately.",
         onConfirm: () => {
           console.log("Delete admin:", admin.id);
+          //TODO
         }
       });
     };
