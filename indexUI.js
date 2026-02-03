@@ -5,9 +5,6 @@ const PANEL = {
 };
 const ADMIN_PASSWORD = "admin123";
 
-let currentPage = 1;
-let rowsPerPage = 10;
-let pendingAction = null;
 let currentPanel = null;
 
 // ====== Panel Utils ======
