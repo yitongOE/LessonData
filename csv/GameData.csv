@@ -1,4 +1,4 @@
 LevelCount,VersionNumber,isActive
-1,V1.0.1,1
-3,25000,1
-4,-250,1
+1,V1.0.1,true
+3,25000,true
+4,-250,true
