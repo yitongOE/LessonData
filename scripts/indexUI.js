@@ -339,7 +339,7 @@ async function saveGamesToServer(games) {
 
 
 // For Admins Panel
-function exportAdminsCSV(admins) {
+async function saveAdminsToServer(admins) {
   const headers = [
     "id",
     "username",
@@ -361,8 +361,16 @@ function exportAdminsCSV(admins) {
   }));
 
   const csv = toCSV(headers, rows);
-  downloadCSV("AdminData.csv", csv);
-}
 
+  const res = await fetch("http://localhost:3000/api/save-admins", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ csv })
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to save AdminData.csv");
+  }
+}
 
 //#endregion

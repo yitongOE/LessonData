@@ -124,9 +124,14 @@
               { key: "role", label: "Role", type: "select", options: ["Admin", "QA", "Guest"] },
               { key: "active", label: "Active", type: "checkbox" }
             ],
-            onSave: () => {
-              drawAdmins();
-              exportAdminsCSV(admins);
+            onSave: async () => {
+              try {
+                await saveAdminsToServer(admins);
+                drawAdmins();
+                showFooterMessage?.("✓ Saved to CSV");
+              } catch (e) {
+                alert("Save failed. Check server.");
+              }
             }
           });
         }
