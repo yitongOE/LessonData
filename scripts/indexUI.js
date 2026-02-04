@@ -1,4 +1,5 @@
-// ====== Panel Constants ======
+//#region ====== Variables ======
+
 const PANEL = {
   GAMES: "games",
   ADMINS: "admins"
@@ -6,13 +7,18 @@ const PANEL = {
 const ADMIN_PASSWORD = "admin123";
 
 let currentPanel = null;
+let pendingAction = null;
 
-// ====== Panel Utils ======
+//#endregion
+
+//#region ====== Panel Switch ======
+
+// Detect current panel
 function getPanel() {
   return new URLSearchParams(location.search).get("panel") || PANEL.GAMES;
 }
 
-// ====== Header & Layout ======
+// Update content according to selected panel
 function setupIndexUI({ gamesCount = 0, adminsCount = 0 }) {
   const panel = getPanel();
 
@@ -56,3 +62,315 @@ function setupIndexUI({ gamesCount = 0, adminsCount = 0 }) {
 
   return panel;
 }
+
+//#endregion
+
+//#region ====== Footer ======
+
+function createFooterController({ onPageChange }) {
+  let currentPage = 1;
+  let rowsPerPage = 10;
+  let totalItems = 0;
+
+  const rowsSelect = document.getElementById("rows-per-page");
+  const rowRange = document.getElementById("row-range");
+
+  const btnFirst = document.getElementById("first-page");
+  const btnPrev = document.getElementById("prev-page");
+  const btnNext = document.getElementById("next-page");
+  const btnLast = document.getElementById("last-page");
+
+  function getTotalPages() {
+    return Math.max(1, Math.ceil(totalItems / rowsPerPage));
+  }
+
+  function updateRowRange() {
+    if (totalItems === 0) {
+      rowRange.textContent = "0–0 of 0";
+      return;
+    }
+
+    const start = (currentPage - 1) * rowsPerPage + 1;
+    const end = Math.min(start + rowsPerPage - 1, totalItems);
+    rowRange.textContent = `${start}–${end} of ${totalItems}`;
+  }
+
+  function updateButtons() {
+    const totalPages = getTotalPages();
+    btnFirst.disabled = currentPage === 1;
+    btnPrev.disabled = currentPage === 1;
+    btnNext.disabled = currentPage === totalPages;
+    btnLast.disabled = currentPage === totalPages;
+  }
+
+  function goToPage(page) {
+    const totalPages = getTotalPages();
+    currentPage = Math.min(Math.max(1, page), totalPages);
+    onPageChange(currentPage, rowsPerPage);
+    updateRowRange();
+    updateButtons();
+  }
+
+  rowsSelect.onchange = () => {
+    rowsPerPage = Number(rowsSelect.value);
+    currentPage = 1;
+    goToPage(currentPage);
+  };
+
+  btnFirst.onclick = () => goToPage(1);
+  btnPrev.onclick = () => goToPage(currentPage - 1);
+  btnNext.onclick = () => goToPage(currentPage + 1);
+  btnLast.onclick = () => goToPage(getTotalPages());
+
+  return {
+    setTotalItems(count) {
+      totalItems = count;
+      currentPage = 1;
+      goToPage(1);
+    },
+    getPageSlice() {
+      const start = (currentPage - 1) * rowsPerPage;
+      return [start, start + rowsPerPage];
+    }
+  };
+}
+
+//#endregion
+
+//#region ====== Action Confirmation Modal ======
+
+function openActionModal({ title, desc, onConfirm }) {
+    const modal = document.getElementById("action-modal");
+    const passwordInput = document.getElementById("modal-password");
+    const awareCheckbox = document.getElementById("modal-aware");
+    const confirmBtn = document.getElementById("modal-confirm");
+    const errorEl = document.getElementById("modal-password-error");
+
+    document.getElementById("modal-title").textContent = title;
+    document.getElementById("modal-desc").textContent = desc;
+
+    passwordInput.value = "";
+    awareCheckbox.checked = false;
+    confirmBtn.disabled = true;
+    errorEl.classList.add("hidden");
+
+    modal.classList.remove("hidden");
+
+    const updateConfirmState = () => {
+      confirmBtn.disabled = !(
+        passwordInput.value.length > 0 && awareCheckbox.checked
+      );
+      errorEl.classList.add("hidden");
+    };
+
+    passwordInput.oninput = updateConfirmState;
+    awareCheckbox.onchange = updateConfirmState;
+
+    pendingAction = onConfirm;
+  }
+
+  document.getElementById("modal-cancel").onclick = () => {
+    document.getElementById("action-modal").classList.add("hidden");
+  };
+
+  document.getElementById("modal-confirm").onclick = () => {
+    const passwordInput = document.getElementById("modal-password");
+    const errorEl = document.getElementById("modal-password-error");
+
+    if (passwordInput.value !== ADMIN_PASSWORD) {
+      errorEl.classList.remove("hidden");
+      return;
+    }
+
+    document.getElementById("action-modal").classList.add("hidden");
+    if (pendingAction) pendingAction();
+  };
+
+  //#endregion
+
+//#region ====== Edit Modal ======
+
+let editingTarget = null;
+let draftData = null;
+
+function openEditModal({ title, data, fields, onSave }) {
+  editingTarget = data;
+  draftData = structuredClone(data);
+
+  const modal = document.getElementById("edit-modal");
+  const form = document.getElementById("edit-form");
+
+  document.getElementById("edit-modal-title").textContent = title;
+  form.innerHTML = "";
+
+  fields.forEach(field => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "edit-field";
+
+    const label = document.createElement("label");
+    label.textContent = field.label;
+
+    let input;
+
+    if (field.type === "checkbox") {
+      input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = !!draftData[field.key];
+      input.onchange = e => {
+        draftData[field.key] = e.target.checked;
+      };
+
+    } else if (field.type === "select") {
+      input = document.createElement("select");
+
+      field.options.forEach(option => {
+        const opt = document.createElement("option");
+        opt.value = option;
+        opt.textContent = option;
+        if (option === draftData[field.key]) {
+          opt.selected = true;
+        }
+        input.appendChild(opt);
+      });
+
+      input.onchange = e => {
+        draftData[field.key] = e.target.value;
+      };
+
+    } else {
+      input = document.createElement("input");
+      input.type = field.type || "text";
+      input.value = draftData[field.key] ?? "";
+      input.oninput = e => {
+        draftData[field.key] = e.target.value;
+      };
+    }
+
+    label.appendChild(input);
+    wrapper.appendChild(label);
+    form.appendChild(wrapper);
+  });
+
+  modal.classList.remove("hidden");
+
+  // Discard editing
+  document.getElementById("edit-cancel").onclick = () => {
+    closeEditModal();
+  };
+
+  // Save editing
+  document.getElementById("edit-save").onclick = () => {
+    Object.assign(editingTarget, draftData);
+    closeEditModal();
+    if (onSave) onSave(editingTarget);
+  };
+}
+
+function closeEditModal() {
+  document.getElementById("edit-modal").classList.add("hidden");
+  editingTarget = null;
+  draftData = null;
+}
+
+//#endregion
+
+//#region ====== Replace CSC ====== 
+
+function downloadCSV(filename, csvText) {
+  const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function toCSV(headers, rows) {
+  const headerLine = headers.join(",");
+
+  const bodyLines = rows.map(row =>
+    headers.map(h => {
+      const value = row[h] ?? "";
+      if (typeof value === "string" && value.includes(",")) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    }).join(",")
+  );
+
+  return [headerLine, ...bodyLines].join("\n");
+}
+
+// For Games Panel
+async function saveGamesToServer(games) {
+  const headers = [
+    "id",
+    "version",
+    "title",
+    "active",
+    "levels"
+  ];
+
+  const rows = games.map(g => ({
+    id: g.id,
+    version: g.version,
+    title: g.title,
+    active: g.active ? "true" : "false",
+    levels: g.levels,
+  }));
+
+  const csv = toCSV(headers, rows);
+
+  const res = await fetch("http://localhost:3000/api/save-games", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ csv })
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to save GameData.csv");
+  }
+}
+
+
+// For Admins Panel
+async function saveAdminsToServer(admins) {
+  const headers = [
+    "id",
+    "username",
+    "firstname",
+    "lastname",
+    "email",
+    "role",
+    "active"
+  ];
+
+  const rows = admins.map(a => ({
+    id: a.id,
+    username: a.username,
+    firstname: a.firstname,
+    lastname: a.lastname,
+    email: a.email,
+    role: a.role,
+    active: a.active ? "true" : "false"
+  }));
+
+  const csv = toCSV(headers, rows);
+
+  const res = await fetch("http://localhost:3000/api/save-admins", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ csv })
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to save AdminData.csv");
+  }
+}
+
+//#endregion

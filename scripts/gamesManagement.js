@@ -1,13 +1,12 @@
 (() => {
-  // ====== Variables ======
+  //#region ====== Variables ======
 
   let games = [];
+  let footer = null;
 
-  let currentPage = 1;
-  let rowsPerPage = 10;
-  let pendingAction = null;
+  //#endregion
 
-  // ====== CSV ======
+  //#region ====== CSV ======
 
   async function loadGamesFromCSV() {
     const res = await fetch("csv/GameData.csv");
@@ -31,7 +30,7 @@
 
       return {
         id: Number(raw.id),
-        number: raw.number,
+        version: raw.version,
         title: raw.title,
         active: raw.active === "true",
         levels: Number(raw.levels),
@@ -41,9 +40,10 @@
     });
   }
 
-  //#region ====== Header Logics ======
+  //#endregion
 
-  // Update game count in Head
+  //#region ====== Header ======
+
   function updateGameCount() {
     const countEl = document.getElementById("item-count");
     countEl.textContent = `(${games.length})`;
@@ -51,22 +51,81 @@
 
   //#endregion
 
-  //#region ====== Table Logics ======
+  //#region ====== Table ======
 
-  // Bind button actions
-  function bindActions(row, game) {
-    // Edit
+  // Create row for each game
+  function renderGamesRow(game, index){
+    return `
+      <td>${index + 1}</td>
+
+      <!-- Actions -->
+      <td>
+        <div class="actions">
+          <button class="action-btn edit" title="Edit">✏️</button>
+          <button class="action-btn restore" title="Restore">🔄</button>
+          <button class="action-btn delete" title="Delete">🗑️</button>
+        </div>
+      </td>
+
+      <!-- Version -->
+      <td>${game.version}</td>
+
+      <!-- Title -->
+      <td>${game.title}</td>
+
+      <!-- Active -->
+      <td>
+        <label class="switch-yn">
+          <input type="checkbox" ${game.active ? "checked" : ""}>
+          <span class="switch-track">
+            <span class="switch-label yes">YES</span>
+            <span class="switch-label no">NO</span>
+            <span class="switch-thumb"></span>
+          </span>
+        </label>
+      </td>
+
+      <!-- Levels -->
+      <td>${game.levels}</td>
+
+      <!-- Updated -->
+      <td>${game.updatedAt}</td>
+      <td>${game.updatedBy}</td>
+    `;
+  }
+
+  // Bind actions with interactctive UI components
+  function bindGamesInteractiveUI(row, game) {
+    // "Edit" Button
     row.querySelector(".edit").onclick = () => {
       openActionModal({
         title: "Modify Game",
         desc: "You are about to modify this game. This change will take effect immediately.",
         onConfirm: () => {
-          console.log("Edit", game.id);
+          openEditModal({
+            title: `Edit Game #${game.id}`,
+            data: game,
+            fields: [
+              { key: "version", label: "Version" },
+              { key: "title", label: "Title" },
+              { key: "active", label: "Active", type: "checkbox" },
+              { key: "levels", label: "Levels", type: "number" }
+            ],
+            onSave: async () => {
+              try {
+                await saveGamesToServer(games);
+                drawGames();
+                showFooterMessage("✓ Saved to CSV");
+              } catch (e) {
+                alert("Save failed. Check server.");
+              }
+            }
+          });
         }
       });
     };
 
-    // Restore
+    // "Restore" Button
     row.querySelector(".restore").onclick = () => {
       openActionModal({
         title: "Restore Latest Safe Version",
@@ -80,18 +139,19 @@
       });
     };
 
-    // Delete
+    // "Delete" Button
     row.querySelector(".delete").onclick = () => {
       openActionModal({
         title: "Delete Game",
         desc: "This action cannot be undone. The deletion takes effect immediately.",
         onConfirm: () => {
           console.log("Delete", game.id);
+          //TODO
         }
       });
     };
 
-    // Switch active/inactive
+    // "Active" Switch
     const toggle = row.querySelector('.switch-yn input');
     if (toggle) {
       toggle.onchange = () => {
@@ -101,215 +161,30 @@
     }
   }
 
-  //#endregion
-
-  //#region ====== Footer Logics ======
-
-  function updateRowRange() {
-    const total = games.length;
-    const start = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const end = Math.min(currentPage * rowsPerPage, total);
-
-    document.getElementById("row-range").textContent =
-      `${start}–${end} of ${total}`;
-  }
-
-  function updateFooterButtons() {
-    const totalPages = Math.ceil(games.length / rowsPerPage);
-
-    document.getElementById("first-page").disabled = currentPage === 1;
-    document.getElementById("prev-page").disabled = currentPage === 1;
-    document.getElementById("next-page").disabled = currentPage === totalPages;
-    document.getElementById("last-page").disabled = currentPage === totalPages;
-  }
-
-  document.getElementById("first-page").onclick = () => {
-    currentPage = 1;
-    draw();
-  };
-
-  document.getElementById("prev-page").onclick = () => {
-    if (currentPage > 1) {
-      currentPage--;
-      draw();
-    }
-  };
-
-  document.getElementById("next-page").onclick = () => {
-    const totalPages = Math.ceil(games.length / rowsPerPage);
-    if (currentPage < totalPages) {
-      currentPage++;
-      draw();
-    }
-  };
-
-  document.getElementById("last-page").onclick = () => {
-    currentPage = Math.ceil(games.length / rowsPerPage);
-    draw();
-  };
-
-  //#endregion
-
-  // ====== Draw ======
-
-  function draw() {
+  // Draw 
+  function drawGames() {
     const tbody = document.getElementById("item-tbody");
     tbody.innerHTML = "";
 
     // Find game rows in current page
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
+    const [start, end] = footer.getPageSlice();
     const pageItems = games.slice(start, end);
 
     // Create game rows
     pageItems.forEach((game, index) => {
       const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${start + index + 1}</td>
-
-        <!-- Actions -->
-        <td>
-          <div class="actions">
-            <button class="action-btn edit" title="Edit">✏️</button>
-            <button class="action-btn restore" title="Restore">🔄</button>
-            <button class="action-btn delete" title="Delete">🗑️</button>
-          </div>
-        </td>
-
-        <!-- Version -->
-        <td>${game.number}</td>
-
-        <!-- Title -->
-        <td>${game.title}</td>
-
-        <!-- Active -->
-        <td>
-          <label class="switch-yn">
-            <input type="checkbox" ${game.active ? "checked" : ""}>
-            <span class="switch-track">
-              <span class="switch-label yes">YES</span>
-              <span class="switch-label no">NO</span>
-              <span class="switch-thumb"></span>
-            </span>
-          </label>
-        </td>
-
-        <!-- Levels -->
-        <td>${game.levels}</td>
-
-        <!-- Updated -->
-        <td>${game.updatedAt}</td>
-        <td>${game.updatedBy}</td>
-      `;
-
-      bindActions(tr, game);
+      tr.innerHTML = renderGamesRow(game, start + index);
+      bindGamesInteractiveUI(tr, game);
       tbody.appendChild(tr); 
     })
 
     // Update UI
     updateGameCount();
-    updateRowRange();
-    updateFooterButtons();
   }
-
-  //#region ====== Action Confirmation Models ======
-
-  // Open a popup window when click on action buttons
-  function openActionModal({ title, desc, onConfirm }) {
-    const modal = document.getElementById("action-modal");
-    const passwordInput = document.getElementById("modal-password");
-    const awareCheckbox = document.getElementById("modal-aware");
-    const confirmBtn = document.getElementById("modal-confirm");
-    const errorEl = document.getElementById("modal-password-error");
-    const passwordText = document.getElementById("modal-password-text");
-    
-    document.getElementById("modal-title").textContent = title;
-    document.getElementById("modal-desc").textContent = desc;
-
-    // Reset password zone
-    passwordInput.value = "";
-    passwordText.value = "";
-    passwordInput.classList.remove("is-hidden");
-    passwordText.classList.add("is-hidden");
-    passwordInput.type = "password";
-    const toggleBtn = document.getElementById("toggle-password");
-    toggleBtn.setAttribute("data-visible", "false");
-
-    awareCheckbox.checked = false;
-    confirmBtn.disabled = true;
-
-    modal.classList.remove("hidden");
-    errorEl.classList.add("hidden");
-
-    const updateConfirmState = () => {
-      const hasPassword = passwordInput.value.length > 0;
-      const awareOk = awareCheckbox.checked;
-      confirmBtn.disabled = !(hasPassword && awareOk);
-      errorEl.classList.add("hidden");
-    };
-
-    passwordInput.oninput = updateConfirmState;
-    awareCheckbox.onchange = updateConfirmState;
-
-    pendingAction = onConfirm;
-  }
-
-  document.getElementById("modal-cancel").onclick = () => {
-    document.getElementById("action-modal").classList.add("hidden");
-  };
-
-  document.getElementById("modal-confirm").onclick = () => {
-    const passwordInput = document.getElementById("modal-password");
-    const errorEl = document.getElementById("modal-password-error");
-
-    if (passwordInput.value !== ADMIN_PASSWORD) {
-      errorEl.classList.remove("hidden");
-      return;
-    }
-
-    document.getElementById("action-modal").classList.add("hidden");
-    if (pendingAction) pendingAction();
-  };
-
-  document.getElementById("toggle-password").onclick = () => {
-    const hidden = document.getElementById("modal-password");
-    const text = document.getElementById("modal-password-text");
-    const btn = document.getElementById("toggle-password");
-
-    const showing = btn.getAttribute("data-visible") === "true";
-
-    if (showing) {
-      // switch to hidden (password)
-      text.classList.add("is-hidden");
-      hidden.classList.remove("is-hidden");
-      hidden.focus();
-      hidden.selectionStart = hidden.selectionEnd = hidden.value.length;
-      btn.setAttribute("data-visible", "false");
-    } else {
-      // switch to visible (text)
-      hidden.classList.add("is-hidden");
-      text.classList.remove("is-hidden");
-      text.focus();
-      text.selectionStart = text.selectionEnd = text.value.length;
-      btn.setAttribute("data-visible", "true");
-    }
-  };
-
-  const pwHidden = document.getElementById("modal-password");
-  const pwText = document.getElementById("modal-password-text");
-
-  // Keep values in sync
-  pwHidden.addEventListener("input", () => {
-    pwText.value = pwHidden.value;
-  });
-  pwText.addEventListener("input", () => {
-    pwHidden.value = pwText.value;
-  });
 
   //#endregion
 
-  // ====== Execution ======
+  // ====== Init ======
 
   (() => {
     const panel = getPanel();
@@ -319,7 +194,12 @@
     async function initGamesPage() {
       games = await loadGamesFromCSV();
       setupIndexUI({ gamesCount: games.length });
-      draw();
+
+      footer = createFooterController({
+        onPageChange: drawGames
+      });
+
+      footer.setTotalItems(games.length);
     }
 
     initGamesPage();

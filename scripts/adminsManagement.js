@@ -1,15 +1,14 @@
 (() => {
-  // ====== Variables ======
+  //#region ====== Variables ======
 
   const ADMIN_ROLES = ["Admin", "QA", "Guest"];
 
   let admins = [];
+  let footer = null;
 
-  let currentPage = 1;
-  let rowsPerPage = 10;
-  let pendingAction = null;
+  //#endregion
 
-  // ===== CSV Loader =====
+  //#region ====== CSV ======
 
   async function loadAdminsFromCSV() {
     const res = await fetch("csv/AdminData.csv");
@@ -43,16 +42,20 @@
     });
   }
 
+  //#endregion
 
-  // ====== Header ======
+  //#region ====== Header ======
 
   function updateAdminCount() {
     const countEl = document.getElementById("item-count");
     countEl.textContent = `(${admins.length})`;
   }
 
-  // ====== Row Render ======
+  //#endregion
 
+  //#region ====== Table ======
+
+  // Create drop-down list for Role
   function renderRoleSelect(admin) {
     return `
       <select class="role-select">
@@ -65,6 +68,7 @@
     `;
   }
 
+  // Create row for each admin account
   function renderAdminRow(admin, index) {
     return `
       <td>${index + 1}</td>
@@ -101,39 +105,59 @@
     `;
   }
 
-  // ====== Bind Actions ======
-
-  function bindAdminActions(row, admin) {
-    // Edit
+  // Bind actions with interactctive UI components
+  function bindInteractiveUI(row, admin) {
+    // "Edit" Button
     row.querySelector(".edit").onclick = () => {
       openActionModal({
         title: "Modify Admin",
         desc: "You are about to modify this admin account. This change will take effect immediately.",
         onConfirm: () => {
-          console.log("Edit admin:", admin.id);
+          openEditModal({
+            title: `Edit Admin`,
+            data: admin,
+            fields: [
+              { key: "username", label: "Username" },
+              { key: "firstname", label: "First Name" },
+              { key: "lastname", label: "Last Name" },
+              { key: "email", label: "Email" },
+              { key: "role", label: "Role", type: "select", options: ["Admin", "QA", "Guest"] },
+              { key: "active", label: "Active", type: "checkbox" }
+            ],
+            onSave: async () => {
+              try {
+                await saveAdminsToServer(admins);
+                drawAdmins();
+                showFooterMessage?.("✓ Saved to CSV");
+              } catch (e) {
+                alert("Save failed. Check server.");
+              }
+            }
+          });
         }
       });
     };
 
-    // Delete
+    // "Delete" Button
     row.querySelector(".delete").onclick = () => {
       openActionModal({
         title: "Delete Admin",
         desc: "This action cannot be undone. The deletion takes effect immediately.",
         onConfirm: () => {
           console.log("Delete admin:", admin.id);
+          //TODO
         }
       });
     };
 
-    // Active switch
+    // "Active" Switch
     const toggle = row.querySelector(".switch-yn input");
     toggle.onchange = () => {
       admin.active = toggle.checked;
       console.log("Admin active changed:", admin.id, admin.active);
     };
 
-    // Role select
+    // "Role" Drop-down List
     const roleSelect = row.querySelector(".role-select");
     roleSelect.onchange = () => {
       admin.role = roleSelect.value;
@@ -141,121 +165,25 @@
     };
   }
 
-  // ====== Footer / Pagination ======
-
-  function updateRowRange() {
-    const total = admins.length;
-    const start = total === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const end = Math.min(currentPage * rowsPerPage, total);
-
-    document.getElementById("row-range").textContent =
-      `${start}–${end} of ${total}`;
-  }
-
-  function updateFooterButtons() {
-    const totalPages = Math.ceil(admins.length / rowsPerPage);
-
-    document.getElementById("first-page").disabled = currentPage === 1;
-    document.getElementById("prev-page").disabled = currentPage === 1;
-    document.getElementById("next-page").disabled = currentPage === totalPages;
-    document.getElementById("last-page").disabled = currentPage === totalPages;
-  }
-
-  document.getElementById("first-page").onclick = () => {
-    currentPage = 1;
-    draw();
-  };
-
-  document.getElementById("prev-page").onclick = () => {
-    if (currentPage > 1) {
-      currentPage--;
-      draw();
-    }
-  };
-
-  document.getElementById("next-page").onclick = () => {
-    const totalPages = Math.ceil(admins.length / rowsPerPage);
-    if (currentPage < totalPages) {
-      currentPage++;
-      draw();
-    }
-  };
-
-  document.getElementById("last-page").onclick = () => {
-    currentPage = Math.ceil(admins.length / rowsPerPage);
-    draw();
-  };
-
-  // ====== Draw ======
-
-  function draw() {
+  // Draw
+  function drawAdmins() {
     const tbody = document.getElementById("item-tbody");
     tbody.innerHTML = "";
 
-    const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
+    const [start, end] = footer.getPageSlice();
     const pageItems = admins.slice(start, end);
 
     pageItems.forEach((admin, index) => {
       const tr = document.createElement("tr");
       tr.innerHTML = renderAdminRow(admin, start + index);
-      bindAdminActions(tr, admin);
+      bindInteractiveUI(tr, admin);
       tbody.appendChild(tr);
     });
 
     updateAdminCount();
-    updateRowRange();
-    updateFooterButtons();
   }
 
-  // ====== Modal ======
-
-  function openActionModal({ title, desc, onConfirm }) {
-    const modal = document.getElementById("action-modal");
-    const passwordInput = document.getElementById("modal-password");
-    const awareCheckbox = document.getElementById("modal-aware");
-    const confirmBtn = document.getElementById("modal-confirm");
-    const errorEl = document.getElementById("modal-password-error");
-
-    document.getElementById("modal-title").textContent = title;
-    document.getElementById("modal-desc").textContent = desc;
-
-    passwordInput.value = "";
-    awareCheckbox.checked = false;
-    confirmBtn.disabled = true;
-    errorEl.classList.add("hidden");
-
-    modal.classList.remove("hidden");
-
-    const updateConfirmState = () => {
-      confirmBtn.disabled = !(
-        passwordInput.value.length > 0 && awareCheckbox.checked
-      );
-      errorEl.classList.add("hidden");
-    };
-
-    passwordInput.oninput = updateConfirmState;
-    awareCheckbox.onchange = updateConfirmState;
-
-    pendingAction = onConfirm;
-  }
-
-  document.getElementById("modal-cancel").onclick = () => {
-    document.getElementById("action-modal").classList.add("hidden");
-  };
-
-  document.getElementById("modal-confirm").onclick = () => {
-    const passwordInput = document.getElementById("modal-password");
-    const errorEl = document.getElementById("modal-password-error");
-
-    if (passwordInput.value !== ADMIN_PASSWORD) {
-      errorEl.classList.remove("hidden");
-      return;
-    }
-
-    document.getElementById("action-modal").classList.add("hidden");
-    if (pendingAction) pendingAction();
-  };
+  //#endregion
 
   // ====== Init ======
 
@@ -267,7 +195,12 @@
     async function initAdminsPage() {
       admins = await loadAdminsFromCSV();
       setupIndexUI({ adminsCount: admins.length });
-      draw();
+
+      footer = createFooterController({
+        onPageChange: drawAdmins
+      });
+
+      footer.setTotalItems(admins.length);
     }
 
     initAdminsPage();
