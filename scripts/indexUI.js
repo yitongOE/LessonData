@@ -364,7 +364,7 @@ async function saveAdminsToServer(admins) {
 
   const csv = toCSV(headers, rows);
 
-  const res = await fetch("https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV", {
+  const res = await fetch("https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveAdminsCSV", {
     method: "POST",
     headers: {
       "Content-Type": "text/csv; charset=utf-8"
