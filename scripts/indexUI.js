@@ -321,15 +321,17 @@ async function saveGamesToServer(games) {
     version: g.version,
     title: g.title,
     active: g.active ? "true" : "false",
-    levels: g.levels,
+    levels: g.levels
   }));
 
   const csv = toCSV(headers, rows);
 
-  const res = await fetch("http://localhost:3000/api/save-games", {
+  const res = await fetch("https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ csv })
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8"
+    },
+    body: csv
   });
 
   if (!res.ok) {
@@ -362,10 +364,12 @@ async function saveAdminsToServer(admins) {
 
   const csv = toCSV(headers, rows);
 
-  const res = await fetch("http://localhost:3000/api/save-admins", {
+  const res = await fetch("https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ csv })
+    headers: {
+      "Content-Type": "text/csv; charset=utf-8"
+    },
+    body: csv
   });
 
   if (!res.ok) {

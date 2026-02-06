@@ -9,7 +9,9 @@
   //#region ====== CSV ======
 
   async function loadGamesFromCSV() {
-    const res = await fetch("csv/GameData.csv");
+    const url = "https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameData.csv" + "?t=" + Date.now();
+    
+    const res = await fetch(url, { cache: "no-store" });
     const text = await res.text();
 
     const lines = text
