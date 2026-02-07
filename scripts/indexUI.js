@@ -380,7 +380,7 @@ async function saveAdminsToServer(admins) {
 // Restore Safe version
 async function restoreCSV(target) {
   const res = await fetch(
-    "https://<your-function-app>.azurewebsites.net/api/restoreFromSafeCSV",
+    "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/restoreSafeCSV",
     {
       method: "POST",
       headers: {
