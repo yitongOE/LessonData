@@ -131,7 +131,7 @@
     row.querySelector(".restore").onclick = () => {
       openActionModal({
         title: "Restore Latest Safe Version",
-        desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
+        desc: "This will restore ALL games to the most recent safe version. Any changes made since the last snapshot will be permanently lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
             await restoreCSV("GameData");
