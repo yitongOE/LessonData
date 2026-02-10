@@ -192,14 +192,19 @@
             title: `Edit Game #${game.id}`,
             data: editModel,
             fields: buildFieldsFromEditableRows(editModel),
-            onSave: async () => {
+            onSave: async (updatedModel) => {
               try {
-                allGameDataRows = [
-                  ...allGameDataRows.filter(r =>
-                    Number(r.id) !== game.id || r.editable !== "true"
-                  ),
-                  ...editModel.rows
-                ];
+                updatedModel.rows.forEach(updated => {
+                  const target = allGameDataRows.find(r =>
+                    String(r.id) === String(updated.id) &&
+                    r.element === updated.element &&
+                    String(r.level || "") === String(updated.level || "")
+                  );
+
+                  if (target) {
+                    target.value = updated.value;
+                  }
+                });
 
                 await saveGamesToServer(allGameDataRows);
                 location.reload();

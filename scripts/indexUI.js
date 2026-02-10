@@ -271,9 +271,8 @@ function openEditModal({ title, data, fields, onSave }) {
 
   // Save editing
   document.getElementById("edit-save").onclick = () => {
-    Object.assign(editingTarget, draftData);
     closeEditModal();
-    if (onSave) onSave(editingTarget);
+    if (onSave) onSave(draftData);
   };
 }
 
@@ -321,35 +320,30 @@ function toCSV(headers, rows) {
 async function saveGamesToServer(games) {
   const headers = [
     "id",
-    "version",
-    "title",
-    "active",
-    "levels"
+    "element",
+    "level",
+    "label",
+    "value",
+    "editable",
   ];
 
-  const rows = games.map(g => ({
-    id: g.id,
-    version: g.version,
-    title: g.title,
-    active: g.active ? "true" : "false",
-    levels: g.levels
-  }));
+  const csv = toCSV(headers, games);
 
-  const csv = toCSV(headers, rows);
-
-  const res = await fetch("https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV", {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8"
-    },
-    body: csv
-  });
+  const res = await fetch(
+    "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8"
+      },
+      body: csv
+    }
+  );
 
   if (!res.ok) {
     throw new Error("Failed to save GameData.csv");
   }
 }
-
 
 // For Admins Panel
 async function saveAdminsToServer(admins) {

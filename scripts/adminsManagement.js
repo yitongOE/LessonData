@@ -127,8 +127,13 @@
               { key: "role", label: "Role", type: "select", options: ["Admin", "QA", "Guest"] },
               { key: "active", label: "Active", type: "checkbox" }
             ],
-            onSave: async () => {
+            onSave: async (updatedAdmin) => {
               try {
+                const index = admins.findIndex(a => a.id === updatedAdmin.id);
+                if (index !== -1) {
+                  admins[index] = updatedAdmin;
+                }
+
                 await saveAdminsToServer(admins);
                 drawAdmins();
                 showFooterMessage?.("✓ Saved to CSV");
