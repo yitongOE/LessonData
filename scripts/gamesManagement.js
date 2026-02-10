@@ -39,12 +39,27 @@
     return buildGamesFromRows(rows);
   }
 
-  // Helpers 
-  function parseValue(value) {
-    if (value === "true") return true;
-    if (value === "false") return false;
-    if (!isNaN(value) && value !== "") return Number(value);
-    return value;
+  // Helpers
+
+  function buildGamesFromRows(rows) {
+    const map = {};
+
+    rows.forEach(r => {
+      const id = Number(r.id);
+      if (!map[id]) {
+        map[id] = {
+          id,
+          version: r.version,
+          title: r.title,
+          active: r.active === "true",
+          levels: r.levels,
+          updatedAt: r.updatedAt,
+          updatedBy: r.updatedBy
+        };
+      }
+    });
+
+    return Object.values(map);
   }
 
   function buildEditableModel(gameId) {
