@@ -201,7 +201,7 @@
                   ...editModel.rows
                 ];
 
-                await saveGameDataToServer(allGameDataRows);
+                await saveGamesToServer(allGameDataRows);
                 location.reload();
               } catch (e) {
                 alert("Save failed. Check server.");
