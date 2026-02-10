@@ -32,34 +32,56 @@
       return obj;
     });
 
-    // ★ 关键：唯一真相源在这里
     allGameDataRows = rows;
 
-    // ↓↓↓ 你已经写好的 panel 聚合逻辑（示意）
     return buildGamesFromRows(rows);
   }
 
   // Helpers
 
   function buildGamesFromRows(rows) {
+    console.log("SAMPLE ROW:", rows[0]);
     const map = {};
 
     rows.forEach(r => {
       const id = Number(r.id);
-      if (!map[id]) {
-        map[id] = {
-          id,
-          version: r.version,
-          title: r.title,
-          active: r.active === "true",
-          levels: r.levels,
-          updatedAt: r.updatedAt,
-          updatedBy: r.updatedBy
-        };
+      map[id] ??= { id };
+
+      switch (r.element) {
+        case "version":
+          map[id].version = r.value;
+          break;
+        case "title":
+          map[id].title = r.value;
+          break;
+        case "active":
+          map[id].active = r.value === "true";
+          break;
+        case "levels":
+          map[id].levels = r.value;
+          break;
+        case "updatedAt":
+          map[id].updatedAt = r.value;
+          break;
+        case "updatedBy":
+          map[id].updatedBy = r.value;
+          break;
       }
     });
 
     return Object.values(map);
+  }
+
+  function inferFieldType(value) {
+    if (value === "true" || value === "false") {
+      return "checkbox";
+    }
+
+    if (!isNaN(value) && value !== "") {
+      return "number";
+    }
+
+    return "text";
   }
 
   function buildEditableModel(gameId) {
@@ -70,14 +92,12 @@
           Number(r.id) === gameId &&
           r.editable === "true"
         )
-        .map(r => ({ ...r })) // clone，避免直接改真相源
+        .map(r => ({ ...r }))
     };
   }
 
   function buildFieldsFromEditableRows(editModel) {
     const fields = [];
-
-    // 按 element 分组
     const grouped = {};
     editModel.rows.forEach(row => {
       grouped[row.element] ??= [];
@@ -175,13 +195,9 @@
             onSave: async () => {
               try {
                 allGameDataRows = [
-                  // 保留：
-                  // 1. 不是当前 game 的
-                  // 2. 或者是当前 game 但 editable !== true 的
                   ...allGameDataRows.filter(r =>
                     Number(r.id) !== game.id || r.editable !== "true"
                   ),
-                  // 替换：当前 game 的 editable 行
                   ...editModel.rows
                 ];
 

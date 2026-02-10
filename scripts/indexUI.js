@@ -193,6 +193,17 @@ function openActionModal({ title, desc, onConfirm }) {
 let editingTarget = null;
 let draftData = null;
 
+function getByPath(obj, path) {
+  return path.split(".").reduce((acc, key) => acc?.[key], obj);
+}
+
+function setByPath(obj, path, value) {
+  const keys = path.split(".");
+  const lastKey = keys.pop();
+  const target = keys.reduce((acc, key) => acc[key], obj);
+  target[lastKey] = value;
+}
+
 function openEditModal({ title, data, fields, onSave }) {
   editingTarget = data;
   draftData = structuredClone(data);
@@ -215,9 +226,9 @@ function openEditModal({ title, data, fields, onSave }) {
     if (field.type === "checkbox") {
       input = document.createElement("input");
       input.type = "checkbox";
-      input.checked = !!draftData[field.key];
+      input.checked = !!getByPath(draftData, field.key);
       input.onchange = e => {
-        draftData[field.key] = e.target.checked;
+        setByPath(draftData, field.key, e.target.checked);
       };
 
     } else if (field.type === "select") {
@@ -227,22 +238,22 @@ function openEditModal({ title, data, fields, onSave }) {
         const opt = document.createElement("option");
         opt.value = option;
         opt.textContent = option;
-        if (option === draftData[field.key]) {
+        if (option === getByPath(draftData, field.key)) {
           opt.selected = true;
         }
         input.appendChild(opt);
       });
 
       input.onchange = e => {
-        draftData[field.key] = e.target.value;
+        setByPath(draftData, field.key, e.target.value);
       };
 
     } else {
       input = document.createElement("input");
       input.type = field.type || "text";
-      input.value = draftData[field.key] ?? "";
+      input.value = getByPath(draftData, field.key) ?? "";
       input.oninput = e => {
-        draftData[field.key] = e.target.value;
+        setByPath(draftData, field.key, e.target.value);
       };
     }
 
