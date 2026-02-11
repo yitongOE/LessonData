@@ -351,9 +351,22 @@ function toCSV(headers, rows) {
 }
 
 // For Games Panel
+function collectContentCSV() {
+  const rows = [];
+  document.querySelectorAll("#edit-content textarea")
+    .forEach(t => {
+      const level = t.dataset.level;
+      const value = t.value.trim();
+      rows.push([level, value]);
+    });
+
+  return "level,value\n" +
+         rows.map(r => `${r[0]},${r[1]}`).join("\n");
+}
+
 async function saveGamesToServer(game) {
 
-  const rows = [
+  const configRows = [
     ["version", game.version],
     ["title", game.title],
     ["active", game.active ? "true" : "false"],
@@ -364,9 +377,16 @@ async function saveGamesToServer(game) {
     ["max_wrong", game.max_wrong || 3]
   ];
 
-  const csv =
+  const configCSV =
     "key,value\n" +
-    rows.map(r => `${r[0]},${r[1]}`).join("\n");
+    configRows.map(r => `${r[0]},${r[1]}`).join("\n");
+
+  const contentCSV = collectContentCSV();
+
+  const contentType =
+    game.key.includes("Sentence")
+      ? "sentences"
+      : "words";
 
   const res = await fetch(
     "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV",
@@ -375,7 +395,9 @@ async function saveGamesToServer(game) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         gameKey: game.key,
-        csv
+        configCSV,
+        contentCSV,
+        contentType
       })
     }
   );
@@ -383,7 +405,7 @@ async function saveGamesToServer(game) {
   if (!res.ok) {
     const text = await res.text();
     console.error(text);
-    throw new Error("Failed to save config.csv");
+    throw new Error("Save failed");
   }
 }
 
