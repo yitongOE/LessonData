@@ -12,7 +12,7 @@
   //#region ====== CSV ======
 
   async function loadGameElementRules() {
-    const rows = await loadCSV("csv/GameElementRule.csv?t=" + Date.now());
+    const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
 
     panelKeys = [];
     panelKeySet.clear();
@@ -43,7 +43,7 @@
     const games = [];
 
     for (const gameDir of gameDirs) {
-      const url = `csv/games/${gameDir}/config.csv?t=${Date.now()}`;
+      const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${gameDir}/config.csv?t=${Date.now()}`;
       const rows = await loadCSV(url);
 
       const game = {};
@@ -65,7 +65,7 @@
   }
 
   async function hasContentCSV(game, key) {
-    const url = `csv/games/${game.key}/${key}.csv`;
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/${key}.csv`;
     try {
       const res = await fetch(url, { method: "HEAD" });
       return res.ok;
@@ -75,7 +75,7 @@
   }
 
   async function loadGameContentCSV(game, key) {
-    const url = `csv/games/${game.key}/${key}.csv?t=${Date.now()}`;
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/${key}.csv?t=${Date.now()}`;
 
     try {
       return await loadCSV(url);
@@ -142,7 +142,7 @@
   }
 
   async function getEditorFieldsFromRules(game) {
-    const rows = await loadCSV("csv/GameElementRule.csv?t=" + Date.now());
+    const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
 
     return rows
       .filter(r => {
@@ -263,7 +263,7 @@
         onConfirm: async () => {
           const fields = await getEditorFieldsFromRules(game);
 
-          const ruleRows = await loadCSV("csv/GameElementRule.csv?t=" + Date.now());
+          const ruleRows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
           const contentKeys = [];
           currentContentKeys = contentKeys;
 
