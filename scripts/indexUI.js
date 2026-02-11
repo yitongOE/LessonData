@@ -351,7 +351,7 @@ function toCSV(headers, rows) {
 }
 
 // For Games Panel
-async function saveGamesToServer(games) {
+async function saveGamesToServer(game) {
   const headers = [
     "id",
     "version",
@@ -360,29 +360,34 @@ async function saveGamesToServer(games) {
     "levels"
   ];
 
-  const rows = games.map(g => ({
-    id: g.id,
-    version: g.version,
-    title: g.title,
-    active: g.active ? "true" : "false",
-    levels: g.levels
-  }));
+  const rows = [{
+    id: game.id,
+    version: game.version,
+    title: game.title,
+    active: game.active ? "true" : "false",
+    levels: game.levels
+  }];
 
   const csv = toCSV(headers, rows);
 
-  const res = await fetch("https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV", {
-    method: "POST",
-    headers: {
-    "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      gameKey: game.key,
-      csv
-    })
-  });
+  const res = await fetch(
+    "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        gameKey: game.key,
+        csv
+      })
+    }
+  );
 
   if (!res.ok) {
-    throw new Error("Failed to save GameData.csv");
+    const text = await res.text();
+    console.error(text);
+    throw new Error("Failed to save config.csv");
   }
 }
 

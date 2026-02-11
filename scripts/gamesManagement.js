@@ -285,9 +285,9 @@
             title: `Edit ${game.title}`,
             data: game,
             fields,
-            onSave: async () => {
+            onSave: async (updatedGame) => {
               try {
-                await saveGamesToServer(games);
+                await saveGamesToServer(updatedGame);
                 drawGames();
                 showFooterMessage("✓ Saved to CSV");
               } catch (e) {
