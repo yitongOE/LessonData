@@ -352,33 +352,29 @@ function toCSV(headers, rows) {
 
 // For Games Panel
 async function saveGamesToServer(game) {
-  const headers = [
-    "id",
-    "version",
-    "title",
-    "active",
-    "levels"
+
+  const rows = [
+    ["version", game.version],
+    ["title", game.title],
+    ["active", game.active ? "true" : "false"],
+    ["levels", game.levels],
+    ["updatedAt", game.updatedAt || "1/1/2000"],
+    ["updatedBy", game.updatedBy || "testuser"],
+    ["lightning_timer", game.lightning_timer || 90],
+    ["max_wrong", game.max_wrong || 3]
   ];
 
-  const rows = [{
-    id: game.id,
-    version: game.version,
-    title: game.title,
-    active: game.active ? "true" : "false",
-    levels: game.levels
-  }];
-
-  const csv = toCSV(headers, rows);
+  const csv =
+    "key,value\n" +
+    rows.map(r => `${r[0]},${r[1]}`).join("\n");
 
   const res = await fetch(
-    "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV",
+    "https://oe-game-test-function-.../api/saveGamesCSV",
     {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        gameKey: game.key,
+        gameKey: game.id,
         csv
       })
     }
@@ -390,7 +386,6 @@ async function saveGamesToServer(game) {
     throw new Error("Failed to save config.csv");
   }
 }
-
 
 // For Admins Panel
 async function saveAdminsToServer(admins) {
