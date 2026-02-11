@@ -280,8 +280,8 @@ function openEditModal({ title, data, fields, onSave }) {
   // Save editing
   document.getElementById("edit-save").onclick = () => {
     Object.assign(editingTarget, draftData);
-    closeEditModal();
     if (onSave) onSave(editingTarget);
+    closeEditModal();
   };
 }
 
