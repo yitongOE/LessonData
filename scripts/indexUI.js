@@ -241,9 +241,23 @@ function openEditModal({ title, data, fields, onSave }) {
       input = document.createElement("input");
       input.type = field.type || "text";
       input.value = draftData[field.key] ?? "";
-      input.oninput = e => {
-        draftData[field.key] = e.target.value;
-      };
+      
+      if (field.key === "levels") {
+        input.oninput = e => {
+          const onLevelChange = e => {
+            const v = Math.max(0, Number(e.target.value) || 0);
+            draftData.levels = v;
+            syncContentWithLevels(v);
+          };
+
+          input.oninput = onLevelChange;
+          input.onchange = onLevelChange;
+        }
+      } else {
+        input.oninput = e => {
+          draftData[field.key] = e.target.value;
+        };
+      }
     }
 
     label.appendChild(input);
@@ -251,6 +265,11 @@ function openEditModal({ title, data, fields, onSave }) {
     form.appendChild(wrapper);
   });
 
+  // Educational content
+  const contentContainer = document.createElement("div");
+  contentContainer.id = "edit-content";
+  form.appendChild(contentContainer);
+  
   modal.classList.remove("hidden");
 
   // Discard editing
@@ -261,8 +280,8 @@ function openEditModal({ title, data, fields, onSave }) {
   // Save editing
   document.getElementById("edit-save").onclick = () => {
     Object.assign(editingTarget, draftData);
-    closeEditModal();
     if (onSave) onSave(editingTarget);
+    closeEditModal();
   };
 }
 
@@ -273,6 +292,31 @@ function closeEditModal() {
 }
 
 //#endregion
+
+async function loadCSV(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  const text = await res.text();
+
+  const lines = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .split("\n")
+    .filter(line => line.trim() !== "");
+
+  if (lines.length === 0) return [];
+
+  const headers = lines[0].split(",").map(h => h.trim());
+
+  return lines.slice(1).map(line => {
+    const values = line.split(",").map(v => v.trim());
+    const obj = {};
+    headers.forEach((h, i) => {
+      obj[h] = values[i];
+    });
+    return obj;
+  });
+}
+
 
 //#region ====== Replace CSV ====== 
 
@@ -307,38 +351,63 @@ function toCSV(headers, rows) {
 }
 
 // For Games Panel
-async function saveGamesToServer(games) {
-  const headers = [
-    "id",
-    "version",
-    "title",
-    "active",
-    "levels"
-  ];
+function collectContentCSV() {
+  const rows = [];
+  document.querySelectorAll("#edit-content textarea")
+    .forEach(t => {
+      const level = t.dataset.level;
+      const value = t.value.trim();
+      rows.push([level, value]);
+    });
 
-  const rows = games.map(g => ({
-    id: g.id,
-    version: g.version,
-    title: g.title,
-    active: g.active ? "true" : "false",
-    levels: g.levels
-  }));
-
-  const csv = toCSV(headers, rows);
-
-  const res = await fetch("https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV", {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8"
-    },
-    body: csv
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to save GameData.csv");
-  }
+  return "level,value\n" +
+         rows.map(r => `${r[0]},${r[1]}`).join("\n");
 }
 
+async function saveGamesToServer(game) {
+
+  const configRows = [
+    ["version", game.version],
+    ["title", game.title],
+    ["active", game.active ? "true" : "false"],
+    ["levels", game.levels],
+    ["updatedAt", game.updatedAt || "1/1/2000"],
+    ["updatedBy", game.updatedBy || "testuser"],
+    ["lightning_timer", game.lightning_timer || 90],
+    ["max_wrong", game.max_wrong || 3]
+  ];
+
+  const configCSV =
+    "key,value\n" +
+    configRows.map(r => `${r[0]},${r[1]}`).join("\n");
+
+  const contentCSV = collectContentCSV();
+
+  const contentType =
+    game.key.includes("Sentence")
+      ? "sentences"
+      : "words";
+
+  const res = await fetch(
+    "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        gameKey: game.key,
+        configCSV,
+        contentCSV,
+        contentType
+      })
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(text);
+    throw new Error("Save failed");
+  }
+}
 
 // For Admins Panel
 async function saveAdminsToServer(admins) {

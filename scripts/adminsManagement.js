@@ -145,7 +145,7 @@
     row.querySelector(".restore").onclick = () => {
       openActionModal({
         title: "Restore Latest Safe Version",
-        desc: "This will restore the admin account to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
+        desc: "This will restore ALL the admin accounts to the most recent safe version. ALL changes since last safe version will be lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
             await restoreCSV("AdminData");
