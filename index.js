@@ -41,12 +41,11 @@ async function checkLogin() {
   try {
     const res = await fetch(
       `${FUNCTION_BASE}/api/getCurrentUser`,
-      { credentials: "include" }
     );
 
     if (!res.ok) {
       window.location.href =
-        `${FUNCTION_BASE}/.auth/login/aad`;
+        `${FUNCTION_BASE}/.auth/login/aad?post_login_redirect_uri=https://yitongoe.github.io/LessonData/`;
       return;
     }
 
