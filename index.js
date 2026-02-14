@@ -41,11 +41,14 @@ async function checkLogin() {
   try {
     const res = await fetch(
       `${FUNCTION_BASE}/api/getCurrentUser`,
+      { credentials: "include" }
     );
 
     if (!res.ok) {
+      const redirect = encodeURIComponent(window.location.href);
+
       window.location.href =
-        `${FUNCTION_BASE}/.auth/login/aad?post_login_redirect_uri=https://yitongoe.github.io/LessonData/`;
+        `${FUNCTION_BASE}/.auth/login/aad?post_login_redirect_uri=${redirect}`;
       return;
     }
 
@@ -60,6 +63,7 @@ async function checkLogin() {
       return;
     }
 
+    console.log("User:", user);
     console.log("Role:", role);
 
     applyPermissions(role);
@@ -568,4 +572,4 @@ async function restoreCSV(target) {
 
 //#endregion
 
-//checkLogin();
+checkLogin();
