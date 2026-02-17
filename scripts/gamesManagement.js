@@ -106,9 +106,9 @@
 
       <td>
         <div class="actions">
-          <button class="action-btn edit" title="Edit">✏️</button>
-          <button class="action-btn restore" title="Restore">🔄</button>
-          <button class="action-btn delete" title="Delete">🗑️</button>
+          <button class="action-btn edit gameEditBtn" title="Edit">✏️</button>
+          <button class="action-btn restore gameRestoreBtn" title="Restore">🔄</button>
+          <button class="action-btn delete gameDeleteBtn" title="Delete">🗑️</button>
         </div>
       </td>
     `;
@@ -358,6 +358,11 @@
 
     // Update UI
     updateGameCount();
+
+    // Set button visibilities based on admin roles
+    if (window.currentRole) {
+      applyPermissions(window.currentRole);
+    }
   }
 
   //#endregion

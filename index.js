@@ -50,8 +50,7 @@ async function checkLogin() {
       window.location.href =
         `${FUNCTION_BASE}/.auth/login/aad?post_login_redirect_uri=${encodeURIComponent(
           FUNCTION_BASE + "/api/loginRedirect?target=" + redirect
-  )}`;
-
+        )}`;
     }
 
     const user = await res.json();
@@ -69,7 +68,6 @@ async function checkLogin() {
     console.log("Role:", role);
 
     applyPermissions(role);
-
   } catch (err) {
     console.error("Login check failed:", err);
   }
@@ -106,13 +104,15 @@ function toggleGroup(className, show) {
 }
 
 function applyPermissions(role) {
-
   const p = PERMISSIONS[role] || PERMISSIONS["QA"];
+  const panel = getPanel(); 
 
-  toggle("adminButton", p.adminPanel);
-  toggleGroup("editButtons", p.edit);
-  toggleGroup("restoreButtons", p.restore);
-  toggleGroup("deleteButtons", p.delete);
+  if (panel === PANEL.GAMES) {
+    toggle("panel-toggle-btn", p.adminPanel);
+    toggleGroup("gameEditBtn", p.edit);
+    toggleGroup("gameRestoreBtn", p.restore);
+    toggleGroup("gameDeleteBtn", p.delete);
+  }
 }
 
 //#endregion
