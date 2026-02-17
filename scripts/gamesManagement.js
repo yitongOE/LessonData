@@ -145,26 +145,22 @@
     const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
 
     return rows
-      .filter(r => {
-        if (r.inEditor !== "true") return false;
+    .filter(r => {
+      if (!(r.key in game)) return false;
+      return r.inEditor === "true" || r.canReadOnly === "true";
+    })
+    .map(r => {
+      const field = {
+        key: r.key,
+        label: r.label,
+        readonly: r.inEditor !== "true"
+      };
 
-        const key = r.key;
+      if (r.key === "active") field.type = "checkbox";
+      if (r.key === "levels") field.type = "number";
 
-        if (key in game) return true;
-
-        return false;
-      })
-      .map(r => {
-        const field = {
-          key: r.key,
-          label: r.label
-        };
-
-        if (r.key === "active") field.type = "checkbox";
-        if (r.key === "levels") field.type = "number";
-
-        return field;
-      });
+      return field;
+    });
   }
 
   function renderEditorContent(contents, contentKeys) {

@@ -259,6 +259,12 @@ body {
   padding-right: 8px;
 }
 
+.readonly-field {
+  background-color: #f4f6f8;
+  color: #555;
+  cursor: not-allowed;
+}
+
 /*#endregion */
 
 /*#region ====== Modal Content Column ====== */
@@ -283,7 +289,7 @@ body {
 
 /*#endregion */
 
-/*#region ====== Password Input (FINAL, CLEAN) ====== */
+/*#region ====== Password Input ====== */
 
 .password-wrapper {
   position: relative;

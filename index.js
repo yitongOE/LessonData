@@ -364,6 +364,12 @@ function openEditModal({ title, data, fields, onSave }) {
           draftData[field.key] = e.target.value;
         };
       }
+
+      // Read Only
+      if (field.readonly) {
+        input.disabled = true;
+        input.classList.add("readonly-field");
+      }
     }
 
     label.appendChild(input);
