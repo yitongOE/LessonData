@@ -299,7 +299,7 @@ function openActionModal({ title, desc, onConfirm }) {
 let editingTarget = null;
 let draftData = null;
 
-function openEditModal({ title, data, fields, onSave }) {
+function openEditModal({ title, data, fields, onSave, readonlyMode = false }) {
   editingTarget = data;
   draftData = structuredClone(data);
 
@@ -326,6 +326,11 @@ function openEditModal({ title, data, fields, onSave }) {
         draftData[field.key] = e.target.checked;
       };
 
+      // Disable checkbox in ReadOnly
+      if (field.readonly || readonlyMode) {
+        input.disabled = true;
+        input.onclick = e => e.preventDefault();
+      }
     } else if (field.type === "select") {
       input = document.createElement("select");
 
@@ -366,7 +371,7 @@ function openEditModal({ title, data, fields, onSave }) {
       }
 
       // Read Only
-      if (field.readonly) {
+      if (field.readonly || readonlyMode) {
         input.disabled = true;
         input.classList.add("readonly-field");
       }
@@ -390,7 +395,9 @@ function openEditModal({ title, data, fields, onSave }) {
   };
 
   // Save editing
-  document.getElementById("edit-save").onclick = () => {
+  const saveBtn = document.getElementById("edit-save");
+  saveBtn.style.display = readonlyMode ? "none" : "";
+  saveBtn.onclick = () => {
     Object.assign(editingTarget, draftData);
     if (onSave) onSave(editingTarget);
     closeEditModal();

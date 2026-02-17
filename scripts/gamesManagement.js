@@ -109,6 +109,7 @@
           <button class="action-btn edit gameEditBtn" title="Edit">✏️</button>
           <button class="action-btn restore gameRestoreBtn" title="Restore">🔄</button>
           <button class="action-btn delete gameDeleteBtn" title="Delete">🗑️</button>
+          <button class="action-btn view gameViewBtn" title="View">🔎</button>
         </div>
       </td>
     `;
@@ -322,6 +323,18 @@
           console.log("Delete", game.title);
           //TODO
         }
+      });
+    };
+
+    // "View" Button
+    row.querySelector(".view").onclick = async() => {
+      const fields = await getEditorFieldsFromRules(game);
+      
+      openEditModal({
+        title: `View ${game.title}`,
+        data: game,
+        fields,
+        readonlyMode: true
       });
     };
 
