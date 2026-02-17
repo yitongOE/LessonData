@@ -60,7 +60,7 @@
   // Create drop-down list for Role
   function renderRoleSelect(admin) {
     return `
-      <select class="role-select">
+      <select class="role-select" disabled>
         ${ADMIN_ROLES.map(role => `
           <option value="${role}" ${role === admin.role ? "selected" : ""}>
             ${role}
@@ -97,7 +97,7 @@
       <!-- Active -->
       <td class="col-center">
         <label class="switch-yn">
-          <input type="checkbox" ${admin.active ? "checked" : ""}>
+          <input type="checkbox" ${admin.active ? "checked" : ""} disabled>
           <span class="switch-track">
             <span class="switch-label yes">YES</span>
             <span class="switch-label no">NO</span>
