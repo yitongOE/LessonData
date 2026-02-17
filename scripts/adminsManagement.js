@@ -1,7 +1,7 @@
 (() => {
   //#region ====== Variables ======
 
-  const ADMIN_ROLES = ["Admin", "QA", "Guest"];
+  const ADMIN_ROLES = ["Admin", "Editor", "QA"];
 
   let admins = [];
   let footer = null;
