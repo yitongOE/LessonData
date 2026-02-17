@@ -112,6 +112,7 @@ function applyPermissions(role) {
     toggleGroup("gameEditBtn", p.edit);
     toggleGroup("gameRestoreBtn", p.restore);
     toggleGroup("gameDeleteBtn", p.delete);
+    toggleGroup("gameViewBtn", p.view);
   }
 }
 
