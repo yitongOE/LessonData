@@ -1,14 +1,14 @@
-id,version,title,active,levels,updatedAt,updatedBy
-1,v1.0.0,Word Splash,TRUE,6,1/23/2026,-
-2,v1.0.0,Sentence Scramble,TRUE,6,1/22/2026,-
-3,v1.0.0,Bubble Pop,TRUE,6,1/24/2026,-
-4,v1.0.0,Placeholder 1,FALSE,1,1/25/2026,John Doe
-5,v1.0.0,Placeholder 2,FALSE,1,1/25/2026,John Doe
-6,v1.0.0,Placeholder 3,FALSE,1,1/25/2026,John Doe
-7,v1.0.0,Placeholder 4,FALSE,1,1/25/2026,John Doe
-8,v1.0.0,Placeholder 5,FALSE,1,1/25/2026,John Doe
-9,v1.0.0,Placeholder 6,FALSE,1,1/25/2026,John Doe
-10,v1.0.0,Placeholder 7,FALSE,1,1/25/2026,John Doe
-11,v1.0.0,Placeholder 8,FALSE,1,1/25/2026,John Doe
-12,v1.0.0,Placeholder 9,FALSE,1,1/25/2026,John Doe
-13,v1.0.0,Placeholder 10,FALSE,1,1/25/2026,John Doe
+id,version,title,active,levels
+1,v1.0.999999,Word Splash,true,6
+2,v1.0.2,Sentence Scramble,true,6
+3,v1.0.0,Bubble Pop,true,6
+4,v1.0.0,Placeholder 1,false,1
+5,v1.0.0,Placeholder 2,false,1
+6,v1.0.0,Placeholder 3,false,1
+7,v1.0.0,Placeholder 4,false,1
+8,v1.0.0,Placeholder 5,false,1
+9,v1.0.0,Placeholder 6,false,1
+10,v1.0.0,Placeholder 7,false,1
+11,v1.0.0,Placeholder 8,false,1
+12,v1.0.0,Placeholder 9,false,1
+13,v1.0.0,Placeholder 10,false,1
