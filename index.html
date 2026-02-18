@@ -90,39 +90,15 @@
           <h3 id="modal-title">Confirm Action</h3>
           <p id="modal-desc" class="modal-desc"></p>
 
-          <!-- Password -->
-          <div class="password-wrapper">
-            <!-- Hidden (password) -->
-            <input
-              type="password"
-              id="modal-password"
-              class="password-field"
-              placeholder="Enter admin password"
-              autocomplete="current-password"
-            />
-
-            <!-- Visible (text) -->
+          <!-- Type-to-confirm -->
+          <div class="confirm-wrapper">
             <input
               type="text"
-              id="modal-password-text"
-              class="password-field is-hidden"
-              placeholder="Enter admin password"
+              id="modal-password"
+              class="confirm-field"
+              placeholder="Type confirmation text"
               autocomplete="off"
             />
-
-            <button
-              type="button"
-              id="toggle-password"
-              class="toggle-password"
-              aria-label="Toggle password visibility"
-              data-visible="false"
-            >
-              <span class="icon-eye">👁</span>
-              <span class="icon-eye-off">⌣</span>
-            </button>
-          </div>
-          <div id="modal-password-error" class="modal-error hidden">
-            Incorrect password.
           </div>
 
           <!-- Awareness -->

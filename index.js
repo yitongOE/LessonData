@@ -1,3 +1,16 @@
+//#region ====== DOM References ======
+
+// Action Modal
+const modal = document.getElementById("action-modal");
+const modalTitle = document.getElementById("modal-title");
+const modalDesc = document.getElementById("modal-desc");
+const passwordInput = document.getElementById("modal-password");
+const awareCheckbox = document.getElementById("modal-aware");
+const confirmBtn = document.getElementById("modal-confirm");
+const cancelBtn = document.getElementById("modal-cancel");
+
+//#endregion
+
 //#region ====== Variables ======
 
 const PANEL = {
@@ -27,7 +40,6 @@ const PERMISSIONS = {
     view: true,
   },
 };
-const ADMIN_PASSWORD = "admin123";
 const FUNCTION_BASE = "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net";
 
 let currentPanel = null;
@@ -244,54 +256,37 @@ function createFooterController({ onPageChange }) {
 
 //#region ====== Action Confirmation Modal ======
 
-function openActionModal({ title, desc, onConfirm }) {
-    const modal = document.getElementById("action-modal");
-    const passwordInput = document.getElementById("modal-password");
-    const awareCheckbox = document.getElementById("modal-aware");
-    const confirmBtn = document.getElementById("modal-confirm");
-    const errorEl = document.getElementById("modal-password-error");
+function openActionModal({ title, desc, requiredText, onConfirm }) {
+  // Initialization
+  modalTitle.textContent = title;
+  modalDesc.textContent = desc + `\n\nType "${requiredText}" to confirm.`;
+  passwordInput.value = "";
+  awareCheckbox.checked = false;
+  confirmBtn.disabled = true;
+  modal.classList.remove("hidden");
 
-    document.getElementById("modal-title").textContent = title;
-    document.getElementById("modal-desc").textContent = desc;
+  // Confirm Button only active when input is correct and aware is checked
+  const updateConfirmState = () => {confirmBtn.disabled = !(passwordInput.value === requiredText && awareCheckbox.checked);};
+  passwordInput.oninput = updateConfirmState;
+  awareCheckbox.onchange = updateConfirmState;
 
-    passwordInput.value = "";
-    awareCheckbox.checked = false;
-    confirmBtn.disabled = true;
-    errorEl.classList.add("hidden");
+  pendingAction = onConfirm;
+}
 
-    modal.classList.remove("hidden");
+// Cancel Button action
+cancelBtn.onclick = () => {
+  modal.classList.add("hidden");
+};
 
-    const updateConfirmState = () => {
-      confirmBtn.disabled = !(
-        passwordInput.value.length > 0 && awareCheckbox.checked
-      );
-      errorEl.classList.add("hidden");
-    };
+// Confirm Button action
+confirmBtn.onclick = () => {
+  if (confirmBtn.disabled) return;
 
-    passwordInput.oninput = updateConfirmState;
-    awareCheckbox.onchange = updateConfirmState;
+  modal.classList.add("hidden");
+  if (pendingAction) pendingAction();
+};
 
-    pendingAction = onConfirm;
-  }
-
-  document.getElementById("modal-cancel").onclick = () => {
-    document.getElementById("action-modal").classList.add("hidden");
-  };
-
-  document.getElementById("modal-confirm").onclick = () => {
-    const passwordInput = document.getElementById("modal-password");
-    const errorEl = document.getElementById("modal-password-error");
-
-    if (passwordInput.value !== ADMIN_PASSWORD) {
-      errorEl.classList.remove("hidden");
-      return;
-    }
-
-    document.getElementById("action-modal").classList.add("hidden");
-    if (pendingAction) pendingAction();
-  };
-
-  //#endregion
+//#endregion
 
 //#region ====== Edit Modal ======
 

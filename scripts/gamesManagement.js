@@ -265,6 +265,7 @@
       openActionModal({
         title: "Modify Game",
         desc: "You are about to modify this game. This change will take effect immediately.",
+        requiredText: `Edit ${game.title}`,
         onConfirm: async () => {
           const fields = await getEditorFieldsFromRules(game);
 
@@ -312,6 +313,7 @@
       openActionModal({
         title: "Restore Latest Safe Version",
         desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
+        requiredText: `Restore ${game.title}`,
         onConfirm: async () => {
           try {
             await restoreCSV(game.key);
@@ -327,6 +329,7 @@
       openActionModal({
         title: "Delete Game",
         desc: "This action cannot be undone. The deletion takes effect immediately.",
+        requiredText: `Delete ${game.title}`,
         onConfirm: () => {
           console.log("Delete", game.title);
           //TODO
