@@ -1,7 +1,7 @@
 (() => {
   //#region ====== Variables ======
 
-  let rvgames = [];
+  let mpgames = [];
   let footer = null;
   let panelKeys = [];
   let panelKeySet = new Set();
@@ -11,8 +11,8 @@
 
   //#region ====== CSV ======
 
-  async function loadGameElementRules() {
-    const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
+  async function loadMarketplaceElementRules() {
+    const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/MarketplaceElementRule.csv?t=" + Date.now());
 
     panelKeys = [];
     panelKeySet.clear();
@@ -27,12 +27,12 @@
 
   function getPanelHeaderKeys() {
   const ths = document
-    .querySelectorAll("#thead-games th[data-key]");
+    .querySelectorAll("#thead-marketplace th[data-key]");
 
     return Array.from(ths).map(th => th.dataset.key);
   }
 
-  async function loadGamesFromCSV() {
+  async function loadMarketplaceFromCSV() {
     const gameDirs = [
       "WordSplash",
       "BubblePop",
@@ -43,7 +43,7 @@
     const games = [];
 
     for (const gameDir of gameDirs) {
-      const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${gameDir}/config.csv?t=${Date.now()}`;
+      const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${gameDir}/config.csv?t=${Date.now()}`;
       const rows = await loadCSV(url);
 
       const game = {};
@@ -65,7 +65,7 @@
   }
 
   async function hasContentCSV(game, key) {
-    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/${key}.csv`;
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/${key}.csv`;
     try {
       const res = await fetch(url, { method: "HEAD" });
       return res.ok;
@@ -74,8 +74,8 @@
     }
   }
 
-  async function loadGameContentCSV(game, key) {
-    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/${key}.csv?t=${Date.now()}`;
+  async function loadMarketplaceContentCSV(game, key) {
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/${key}.csv?t=${Date.now()}`;
 
     try {
       return await loadCSV(url);
@@ -88,9 +88,9 @@
 
   //#region ====== Header ======
 
-  function updateGameCount() {
+  function updateMarketplaceCount() {
     const countEl = document.getElementById("item-count");
-    countEl.textContent = `(${rvgames.length})`;
+    countEl.textContent = `(${mpgames.length})`;
   }
 
   //#endregion
@@ -98,7 +98,7 @@
   //#region ====== Table ======
 
   // Create row for each game
-  function renderGamesRow(game, index){
+  function renderMarketplaceRow(game, index){
     const headerKeys = getPanelHeaderKeys();
 
     let html = `
@@ -143,7 +143,7 @@
   }
 
   async function getEditorFieldsFromRules(game) {
-    const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
+    const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/MarketplaceElementRule.csv?t=" + Date.now());
 
     return rows
     .filter(r => {
@@ -259,7 +259,7 @@
   };
 
   // Bind actions with interactctive UI components
-  function bindGamesInteractiveUI(row, game) {
+  function bindMarketplaceInteractiveUI(row, game) {
     // "Edit" Button
     row.querySelector(".edit").onclick = async () => {
       openActionModal({
@@ -269,7 +269,7 @@
         onConfirm: async () => {
           const fields = await getEditorFieldsFromRules(game);
 
-          const ruleRows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
+          const ruleRows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/MarketplaceElementRule.csv?t=" + Date.now());
           const contentKeys = [];
           currentContentKeys = contentKeys;
 
@@ -283,7 +283,7 @@
           }
           const contents = {};
           for (const c of contentKeys) {
-            const rows = await loadGameContentCSV(game, c.key);
+            const rows = await loadMarketplaceContentCSV(game, c.key);
             if (rows) contents[c.key] = rows;
           }
 
@@ -293,8 +293,8 @@
             fields,
             onSave: async (updatedGame) => {
               try {
-                await saveGamesToServer(updatedGame);
-                drawGames();
+                await saveMarketplaceToServer(updatedGame);
+                drawMarketplace();
                 showFooterMessage("✓ Saved to CSV");
               } catch (e) {
                 alert("Save failed. Check server.");
@@ -342,7 +342,7 @@
       const fields = await getEditorFieldsFromRules(game);
 
       const ruleRows = await loadCSV(
-        "https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now()
+        "https://lessondatamanagement.blob.core.windows.net/lessondata/current/MarketplaceElementRule.csv?t=" + Date.now()
       );
 
       const contentKeys = [];
@@ -358,7 +358,7 @@
 
       const contents = {};
       for (const c of contentKeys) {
-        const rows = await loadGameContentCSV(game, c.key);
+        const rows = await loadMarketplaceContentCSV(game, c.key);
         if (rows) contents[c.key] = rows;
       }
 
@@ -384,24 +384,24 @@
   }
 
   // Draw 
-  function drawGames() {
+  function drawMarketplace() {
     const tbody = document.getElementById("item-tbody");
     tbody.innerHTML = "";
 
     // Find game rows in current page
     const [start, end] = footer.getPageSlice();
-    const pageItems = rvgames.slice(start, end);
+    const pageItems = mpgames.slice(start, end);
 
     // Create game rows
     pageItems.forEach((game, index) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = renderGamesRow(game, start + index);
-      bindGamesInteractiveUI(tr, game);
+      tr.innerHTML = renderMarketplaceRow(game, start + index);
+      bindMarketplaceInteractiveUI(tr, game);
       tbody.appendChild(tr); 
     })
 
     // Update UI
-    updateGameCount();
+    updateMarketplaceCount();
 
     // Set button visibilities based on admin roles
     if (window.currentRole) {
@@ -416,21 +416,21 @@
   (() => {
     const panel = getPanel();
 
-    if (panel !== PANEL.GAMES) return;
+    if (panel !== PANEL.MARKETPLACE) return;
 
-    async function initGamesPage() {
-      await loadGameElementRules();
-      rvgames = await loadGamesFromCSV();
-      setupIndexUI({ gamesCount: rvgames.length });
+    async function initMarketplacePage() {
+      await loadMarketplaceElementRules();
+      mpgames = await loadMarketplaceFromCSV();
+      setupIndexUI({ marketplaceCount: mpgames.length });
 
       footer = createFooterController({
-        onPageChange: drawGames
+        onPageChange: drawMarketplace
       });
 
-      footer.setTotalItems(rvgames.length);
+      footer.setTotalItems(mpgames.length);
     }
 
-    initGamesPage();
+    initMarketplacePage();
   })();
 
 })();

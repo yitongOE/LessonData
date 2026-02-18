@@ -1,0 +1,9 @@
+key,value
+version,v1.0.0
+title,Word Scramble Arcade
+active,true
+levels,6
+updatedAt,1/1/2000
+updatedBy,testuser
+timer,30
+block_highlight,true

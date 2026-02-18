@@ -1,0 +1,14 @@
+key,label,inPanel,inEditor,isContent,canReadOnly
+id,#,true,false,false,false
+version,Version Number,true,false,false,true
+title,Game Title,true,true,false,true
+active,Active,true,true,false,true
+levels,Levels,true,false,false,true
+updatedAt,Last Updated,true,false,false,false
+updatedBy,Updated By,true,false,false,false
+timer,Timer (seconds),false,true,false,true
+lightning_timer,Lightning Timer (seconds),false,true,false,true
+max_wrong,Max Number of Wrong Actions,false,true,false,true
+block_highlight,Block Highlight,false,true,false,true
+words,Words,false,true,true,true
+sentences,Sentences,false,true,true,true

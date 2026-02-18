@@ -18,14 +18,37 @@
         <span id="item-count">(0)</span>
       </h2>
       
-      <div id="header-actions">
-        <button id="panel-toggle-btn"></button>
+      <div id="panel-toggle">
+        <button id="btn-games" class="panel-toggle-btn">
+          Review Management
+        </button>
+
+        <button id="btn-marketplace" class="panel-toggle-btn">
+          Marketplace Management
+        </button>
+
+        <button id="btn-admins" class="panel-toggle-btn">
+          Admin Management
+        </button>
       </div>
     </div>
     
     <!-- Table -->
     <table id="item-table">
       <thead id="thead-games">
+        <tr>
+          <th>#</th>
+          <th>ACTIONS</th>
+          <th data-key="version">VERSION NUMBER</th>
+          <th data-key="title">GAME TITLE</th>
+          <th data-key="active">ACTIVE</th>
+          <th data-key="levels">LEVELS</th>
+          <th data-key="updatedAt">LAST UPDATED</th>
+          <th data-key="updatedBy">UPDATED BY</th>
+        </tr>
+      </thead>
+
+      <thead id="thead-marketplace">
         <tr>
           <th>#</th>
           <th>ACTIONS</th>
@@ -142,5 +165,6 @@
     <script src="index.js"></script>
     <script src="scripts/gamesManagement.js"></script>
     <script src="scripts/adminsManagement.js"></script>
+    <script src="scripts/marketplaceManagement.js"></script>
   </body>
 </html>

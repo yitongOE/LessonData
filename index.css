@@ -51,7 +51,7 @@ body {
   color: var(--text-muted);
 }
 
-#header-actions {
+#panel-toggle {
   display: flex;
   align-items: center;
 }

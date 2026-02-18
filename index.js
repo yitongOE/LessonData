@@ -1,5 +1,15 @@
 //#region ====== DOM References ======
 
+// Panel Switch
+const btnGames = document.getElementById("btn-games");
+const btnMarketplace = document.getElementById("btn-marketplace");
+const btnAdmins = document.getElementById("btn-admins");
+const titleText = document.getElementById("header-title-text");
+const itemCount = document.getElementById("item-count");
+const theadGames = document.getElementById("thead-games");
+const theadAdmins = document.getElementById("thead-admins");
+const theadMarketplace = document.getElementById("thead-marketplace");
+
 // Action Modal
 const modal = document.getElementById("action-modal");
 const modalTitle = document.getElementById("modal-title");
@@ -16,7 +26,8 @@ const cancelBtn = document.getElementById("modal-cancel");
 
 const PANEL = {
   GAMES: "games",
-  ADMINS: "admins"
+  ADMINS: "admins",
+  MARKETPLACE: "marketplace"
 };
 const PERMISSIONS = {
   Admin: {
@@ -118,7 +129,7 @@ function applyPermissions(role) {
   const p = PERMISSIONS[role] || PERMISSIONS["QA"];
   const panel = getPanel(); 
 
-  if (panel === PANEL.GAMES) {
+  if (panel === PANEL.GAMES || panel === PANEL.MARKETPLACE) {
     toggle("panel-toggle-btn", p.adminPanel);
     toggleGroup("gameEditBtn", p.edit);
     toggleGroup("gameRestoreBtn", p.restore);
@@ -137,46 +148,65 @@ function getPanel() {
 }
 
 // Update content according to selected panel
-function setupIndexUI({ gamesCount = 0, adminsCount = 0 }) {
+function setupIndexUI({ gamesCount = 0, adminsCount = 0, marketplaceCount = 0 }) {
   const panel = getPanel();
 
-  const toggleBtn = document.getElementById("panel-toggle-btn");
-  const titleText = document.getElementById("header-title-text");
-  const itemCount = document.getElementById("item-count");
-  const theadGames = document.getElementById("thead-games");
-  const theadAdmins = document.getElementById("thead-admins");
+  btnGames.style.display = "";
+  btnMarketplace.style.display = "";
+  btnAdmins.style.display = "";
 
   if (panel === PANEL.GAMES) {
     // Header
-    document.title = "Our English - Games Management";
-    titleText.textContent = "Games";
+    document.title = "Our English - Review Management";
+    titleText.textContent = "Review";
     itemCount.textContent = `(${gamesCount})`;
 
     // Toggle button
-    toggleBtn.textContent = "Admins Management";
-    toggleBtn.onclick = () => {
-      location.href = "index.html?panel=admins";
-    };
+    btnGames.style.display = "none";
 
     // Table head
     theadGames.classList.remove("hidden");
     theadAdmins.classList.add("hidden");
-  } else {
+    theadMarketplace.classList.add("hidden");
+  } else if (panel === PANEL.ADMINS) {
     // Header
     document.title = "Our English - Admins Management";
     titleText.textContent = "Admins";
     itemCount.textContent = `(${adminsCount})`;
 
     // Toggle button
-    toggleBtn.textContent = "Games Management";
-    toggleBtn.onclick = () => {
-      location.href = "index.html?panel=games";
-    };
+    btnAdmins.style.display = "none";
 
     // Table head
     theadGames.classList.add("hidden");
     theadAdmins.classList.remove("hidden");
+    theadMarketplace.classList.add("hidden");
+  } else {
+    // Header
+    document.title = "Our English - Marketplace Management";
+    titleText.textContent = "Marketplace";
+    itemCount.textContent = `(${marketplaceCount})`;
+
+    // Toggle button
+    btnMarketplace.style.display = "none";
+
+    // Table head
+    theadGames.classList.add("hidden");
+    theadAdmins.classList.add("hidden");
+    theadMarketplace.classList.remove("hidden");
   }
+
+  btnGames.onclick = () => {
+    location.href = "index.html?panel=games";
+  };
+
+  btnMarketplace.onclick = () => {
+    location.href = "index.html?panel=marketplace";
+  };
+
+  btnAdmins.onclick = () => {
+    location.href = "index.html?panel=admins";
+  };
 
   return panel;
 }
@@ -504,6 +534,52 @@ async function saveGamesToServer(game) {
 
   const res = await fetch(
     "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        gameKey: game.key,
+        configCSV,
+        contentCSV,
+        contentType
+      })
+    }
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error(text);
+    throw new Error("Save failed");
+  }
+}
+
+// For Marketplace Panel
+async function saveMarketplaceToServer(game) {
+
+  const configRows = [
+    ["version", game.version],
+    ["title", game.title],
+    ["active", game.active ? "true" : "false"],
+    ["levels", game.levels],
+    ["updatedAt", game.updatedAt || "1/1/2000"],
+    ["updatedBy", game.updatedBy || "testuser"],
+    ["lightning_timer", game.lightning_timer || 90],
+    ["max_wrong", game.max_wrong || 3]
+  ];
+
+  const configCSV =
+    "key,value\n" +
+    configRows.map(r => `${r[0]},${r[1]}`).join("\n");
+
+  const contentCSV = collectContentCSV();
+
+  const contentType =
+    game.key.includes("Sentence")
+      ? "sentences"
+      : "words";
+
+  const res = await fetch(
+    "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveMarketplaceCSV",
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
