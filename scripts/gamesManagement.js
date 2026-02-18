@@ -90,7 +90,7 @@
 
   function updateGameCount() {
     const countEl = document.getElementById("item-count");
-    countEl.textContent = `(${games.length})`;
+    countEl.textContent = `(${rvgames.length})`;
   }
 
   //#endregion

@@ -129,7 +129,7 @@ function applyPermissions(role) {
   const p = PERMISSIONS[role] || PERMISSIONS["QA"];
   const panel = getPanel(); 
 
-  if (panel === PANEL.GAMES) {
+  if (panel === PANEL.GAMES || panel === PANEL.MARKETPLACE) {
     toggle("panel-toggle-btn", p.adminPanel);
     toggleGroup("gameEditBtn", p.edit);
     toggleGroup("gameRestoreBtn", p.restore);
