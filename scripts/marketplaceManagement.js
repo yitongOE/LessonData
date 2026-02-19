@@ -84,6 +84,16 @@
     }
   }
 
+  async function loadMarketplaceSelectedCSV(game) {
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/selected.csv?t=${Date.now()}`;
+
+    try {
+      return await loadCSV(url);
+    } catch {
+      return null;
+    }
+  }
+
   //#endregion
 
   //#region ====== Header ======
@@ -187,14 +197,14 @@
       block.appendChild(h4);
 
       rows.forEach(r => {
-        const chapter = Number(r.chapter);
+        const level = Number(r.level);
 
         const rowDiv = document.createElement("div");
         rowDiv.className = "content-row";
 
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
-        textarea.dataset.chapter = r.chapter;
+        textarea.dataset.level = r.level;
         textarea.rows = 3;
         textarea.value = r.value ?? "";
 
@@ -203,7 +213,7 @@
           textarea.classList.add("readonly-field");
         }
 
-        rowDiv.appendChild(document.createElement("div")).textContent = `chapter ${chapter}`;
+        rowDiv.appendChild(document.createElement("div")).textContent = `Level ${level}`;
         rowDiv.appendChild(textarea);
 
         block.appendChild(rowDiv);
@@ -213,50 +223,91 @@
     });
   }
 
-  window.syncMarketplaceContentWithLevels = function (levelCount, readonlyMode = true) {
+  window.syncMarketplaceContentWithLevels = function (levelCount, readonlyMode = false) {
     const container = document.getElementById("edit-content");
     if (!container) return;
 
     const existing = {};
     container.querySelectorAll("textarea").forEach(t => {
       const key = t.dataset.contentKey;
-      const chapter = Number(t.dataset.chapter);
+      const level = Number(t.dataset.level);
       if (!existing[key]) existing[key] = {};
-      existing[key][chapter] = t.value;
+      existing[key][level] = t.value;
     });
 
     container.innerHTML = "";
 
-    currentContentKeys.forEach(({ key, label }) => {
-      const block = document.createElement("div");
-      block.className = "content-block";
+    if (!draftData.chapterMap) draftData.chapterMap = {};
 
-      const h4 = document.createElement("h4");
-      h4.textContent = label;
-      block.appendChild(h4);
+    const chapterWrapper = document.createElement("div");
+    chapterWrapper.className = "chapter-sections";
 
-      for (let i = 1; i <= levelCount; i++) {
-        const row = document.createElement("div");
-        row.className = "content-row";
-
-        const textarea = document.createElement("textarea");
-        textarea.dataset.contentKey = key;
-        textarea.dataset.chapter = i;
-        textarea.rows = 3;
-        textarea.value = existing[key]?.[i] ?? "";
-
-        if (readonlyMode) {
-          textarea.disabled = true;
-        }
-
-        row.appendChild(textarea);
-
-        block.appendChild(row);
+    for (let i = 1; i <= levelCount; i++) {
+      if (!draftData.chapterMap[i]) {
+        draftData.chapterMap[i] = [false, false, false, false, false, false];
       }
 
-      container.appendChild(block);
-    });
+      const section = document.createElement("div");
+      section.className = "level-section";
+
+      const title = document.createElement("h4");
+      title.textContent = `Level ${i}`;
+      section.appendChild(title);
+
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.gap = "20px";
+      row.style.marginBottom = "20px";
+
+      for (let c = 0; c < 6; c++) {
+
+        const label = document.createElement("label");
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "5px";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = draftData.chapterMap[i][c];
+        checkbox.disabled = readonlyMode;
+
+        checkbox.onchange = () => {
+          draftData.chapterMap[i][c] = checkbox.checked;
+        };
+
+        label.appendChild(checkbox);
+        label.appendChild(
+          document.createTextNode(`Chapter ${c + 1}`)
+        );
+
+        row.appendChild(label);
+      }
+
+      section.appendChild(row);
+      chapterWrapper.appendChild(section);
+    }
+
+    container.appendChild(chapterWrapper);
   };
+
+  function collectSelectedCSV() {
+    if (!draftData.chapterMap) return "level,selected,value\n";
+
+    const rows = [];
+
+    for (let level = 1; level <= draftData.levels; level++) {
+      const arr = draftData.chapterMap[level] || [false, false, false, false, false, false];
+      const selected = arr
+        .map((checked, index) => checked ? index + 1 : null)
+        .filter(Boolean)
+        .join("|");
+
+      rows.push(`${level},${selected},`);
+    }
+
+    return "level,selected,value\n" + rows.join("\n");
+  }
+
 
   // Bind actions with interactctive UI components
   function bindMarketplaceInteractiveUI(row, game) {
@@ -267,25 +318,8 @@
         desc: "You are about to modify this game. This change will take effect immediately.",
         onConfirm: async () => {
           const fields = await getEditorFieldsFromRules(game);
-
           const contentKeys = [];
           currentContentKeys = contentKeys;
-
-          if (await hasMarketplaceContentCSV(game)) {
-            let label = "Content";
-
-            if (game.key.toLowerCase().includes("sentence")) label = "Sentences";
-            else label = "Words";
-
-            contentKeys.push({ key: "content", label });
-          }
-
-          const contents = {};
-
-          if (contentKeys.length > 0) {
-            const rows = await loadMarketplaceContentCSV(game);
-            if (rows) contents["content"] = rows;
-          }
 
           openEditModal({
             title: `Edit ${game.title}`,
@@ -293,7 +327,7 @@
             fields,
             onSave: async (updatedGame) => {
               try {
-                await saveMarketplaceToServer(updatedGame);
+                await saveMarketplaceToServer(updatedGame, collectSelectedCSV());
                 drawMarketplace();
                 showFooterMessage("✓ Saved to CSV");
               } catch (e) {
@@ -302,7 +336,27 @@
             }
           });
 
-          renderEditorContent(contents, contentKeys);
+          let selectedRows = await loadMarketplaceSelectedCSV(game);
+
+          if (selectedRows) {
+            draftData.chapterMap = {};
+
+            selectedRows.forEach(r => {
+              const level = Number(r.level);
+              const selectedArr = (r.selected || "")
+                .split("|")
+                .map(n => Number(n));
+
+              draftData.chapterMap[level] = [false, false, false, false, false, false];
+
+              selectedArr.forEach(ch => {
+                if (ch >= 1 && ch <= 6) {
+                  draftData.chapterMap[level][ch - 1] = true;
+                }
+              });
+            });
+          }
+
           syncMarketplaceContentWithLevels(draftData.levels);
         }
       });

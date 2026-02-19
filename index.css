@@ -253,10 +253,11 @@ body {
 }
 
 .modal-content {
-  max-width: 100%;
+  max-width: 90%;
   flex: 1;
   overflow-y: auto;
   padding-right: 8px;
+  margin: 0 auto;
 }
 
 .readonly-field {
@@ -268,11 +269,6 @@ body {
 /*#endregion */
 
 /*#region ====== Modal Content Column ====== */
-
-.modal-content {
-  max-width: 420px;
-  margin: 0 auto;
-}
 
 .modal-content h3 {
   margin: 0 0 12px;

@@ -547,7 +547,7 @@ async function saveGamesToServer(game) {
 }
 
 // For Marketplace Panel
-async function saveMarketplaceToServer(game) {
+async function saveMarketplaceToServer(game, selectedCSV) {
 
   const configRows = [
     ["version", game.version],
@@ -580,7 +580,8 @@ async function saveMarketplaceToServer(game) {
         gameKey: game.key,
         configCSV,
         contentCSV,
-        contentType
+        contentType,
+        selectedCSV
       })
     }
   );
