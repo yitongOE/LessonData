@@ -523,10 +523,7 @@ async function saveGamesToServer(game) {
 
   const contentCSV = collectContentCSV();
 
-  const contentType =
-    game.key.includes("Sentence")
-      ? "sentences"
-      : "words";
+  const contentType = "content";
 
   const res = await fetch(
     "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV",

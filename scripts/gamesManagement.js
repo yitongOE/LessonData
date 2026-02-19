@@ -64,8 +64,8 @@
     return raw;
   }
 
-  async function hasContentCSV(game, key) {
-    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/${key}.csv`;
+  async function hasGameContentCSV(game) {
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/content.csv`;
     try {
       const res = await fetch(url, { method: "HEAD" });
       return res.ok;
@@ -74,8 +74,8 @@
     }
   }
 
-  async function loadGameContentCSV(game, key) {
-    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/${key}.csv?t=${Date.now()}`;
+  async function loadGameContentCSV(game) {
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/content.csv?t=${Date.now()}`;
 
     try {
       return await loadCSV(url);
@@ -268,22 +268,23 @@
         onConfirm: async () => {
           const fields = await getEditorFieldsFromRules(game);
 
-          const ruleRows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
           const contentKeys = [];
           currentContentKeys = contentKeys;
 
-          for (const r of ruleRows) {
-            if (r.inEditor !== "true") continue;
-            if (r.isContent !== "true") continue;
+          if (await hasGameContentCSV(game)) {
+            let label = "Content";
 
-            if (await hasContentCSV(game, r.key)) {
-              contentKeys.push({ key: r.key, label: r.label });
-            }
+            if (game.key.toLowerCase().includes("sentence")) label = "Sentences";
+            else label = "Words";
+
+            contentKeys.push({ key: "content", label });
           }
+
           const contents = {};
-          for (const c of contentKeys) {
-            const rows = await loadGameContentCSV(game, c.key);
-            if (rows) contents[c.key] = rows;
+
+          if (contentKeys.length > 0) {
+            const rows = await loadGameContentCSV(game);
+            if (rows) contents["content"] = rows;
           }
 
           openEditModal({
@@ -338,25 +339,25 @@
     row.querySelector(".view").onclick = async() => {
       const fields = await getEditorFieldsFromRules(game);
 
-      const ruleRows = await loadCSV(
-        "https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now()
-      );
-
       const contentKeys = [];
       currentContentKeys = contentKeys;
 
-      for (const r of ruleRows) {
-        if (r.isContent !== "true") continue;
+      if (await hasGameContentCSV(game)) {
+        let label = "Content";
 
-        if (await hasContentCSV(game, r.key)) {
-          contentKeys.push({ key: r.key, label: r.label });
-        }
+        if (game.key.toLowerCase().includes("sentence")) label = "Sentences";
+        else label = "Words";
+
+        contentKeys.push({ key: "content", label });
       }
 
       const contents = {};
-      for (const c of contentKeys) {
-        const rows = await loadGameContentCSV(game, c.key);
-        if (rows) contents[c.key] = rows;
+
+      if (contentKeys.length > 0) {
+        const rows = await loadGameContentCSV(game);
+        if (rows) {
+          contents["content"] = rows;
+        }
       }
 
       openEditModal({

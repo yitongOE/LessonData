@@ -64,8 +64,8 @@
     return raw;
   }
 
-  async function hasContentCSV(game, key) {
-    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/${key}.csv`;
+  async function hasMarketplaceContentCSV(game) {
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/content.csv`;
     try {
       const res = await fetch(url, { method: "HEAD" });
       return res.ok;
@@ -74,8 +74,8 @@
     }
   }
 
-  async function loadMarketplaceContentCSV(game, key) {
-    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/${key}.csv?t=${Date.now()}`;
+  async function loadMarketplaceContentCSV(game) {
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/content.csv?t=${Date.now()}`;
 
     try {
       return await loadCSV(url);
@@ -187,14 +187,14 @@
       block.appendChild(h4);
 
       rows.forEach(r => {
-        const level = Number(r.level);
+        const chapter = Number(r.chapter);
 
         const rowDiv = document.createElement("div");
         rowDiv.className = "content-row";
 
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
-        textarea.dataset.level = r.level;
+        textarea.dataset.chapter = r.chapter;
         textarea.rows = 3;
         textarea.value = r.value ?? "";
 
@@ -203,7 +203,7 @@
           textarea.classList.add("readonly-field");
         }
 
-        rowDiv.appendChild(document.createElement("div")).textContent = `Level ${level}`;
+        rowDiv.appendChild(document.createElement("div")).textContent = `chapter ${chapter}`;
         rowDiv.appendChild(textarea);
 
         block.appendChild(rowDiv);
@@ -220,9 +220,9 @@
     const existing = {};
     container.querySelectorAll("textarea").forEach(t => {
       const key = t.dataset.contentKey;
-      const level = Number(t.dataset.level);
+      const chapter = Number(t.dataset.chapter);
       if (!existing[key]) existing[key] = {};
-      existing[key][level] = t.value;
+      existing[key][chapter] = t.value;
     });
 
     container.innerHTML = "";
@@ -241,7 +241,7 @@
 
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
-        textarea.dataset.level = i;
+        textarea.dataset.chapter = i;
         textarea.rows = 3;
         textarea.value = existing[key]?.[i] ?? "";
 
@@ -268,22 +268,23 @@
         onConfirm: async () => {
           const fields = await getEditorFieldsFromRules(game);
 
-          const ruleRows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/MarketplaceElementRule.csv?t=" + Date.now());
           const contentKeys = [];
           currentContentKeys = contentKeys;
 
-          for (const r of ruleRows) {
-            if (r.inEditor !== "true") continue;
-            if (r.isContent !== "true") continue;
+          if (await hasMarketplaceContentCSV(game)) {
+            let label = "Content";
 
-            if (await hasContentCSV(game, r.key)) {
-              contentKeys.push({ key: r.key, label: r.label });
-            }
+            if (game.key.toLowerCase().includes("sentence")) label = "Sentences";
+            else label = "Words";
+
+            contentKeys.push({ key: "content", label });
           }
+
           const contents = {};
-          for (const c of contentKeys) {
-            const rows = await loadMarketplaceContentCSV(game, c.key);
-            if (rows) contents[c.key] = rows;
+
+          if (contentKeys.length > 0) {
+            const rows = await loadMarketplaceContentCSV(game);
+            if (rows) contents["content"] = rows;
           }
 
           openEditModal({
@@ -338,25 +339,25 @@
     row.querySelector(".view").onclick = async() => {
       const fields = await getEditorFieldsFromRules(game);
 
-      const ruleRows = await loadCSV(
-        "https://lessondatamanagement.blob.core.windows.net/lessondata/current/MarketplaceElementRule.csv?t=" + Date.now()
-      );
-
       const contentKeys = [];
       currentContentKeys = contentKeys;
 
-      for (const r of ruleRows) {
-        if (r.isContent !== "true") continue;
+      if (await hasMarketplaceContentCSV(game)) {
+        let label = "Content";
 
-        if (await hasContentCSV(game, r.key)) {
-          contentKeys.push({ key: r.key, label: r.label });
-        }
+        if (game.key.toLowerCase().includes("sentence")) label = "Sentences";
+        else label = "Words";
+
+        contentKeys.push({ key: "content", label });
       }
 
       const contents = {};
-      for (const c of contentKeys) {
-        const rows = await loadMarketplaceContentCSV(game, c.key);
-        if (rows) contents[c.key] = rows;
+
+      if (contentKeys.length > 0) {
+        const rows = await loadMarketplaceContentCSV(game);
+        if (rows) {
+          contents["content"] = rows;
+        }
       }
 
       openEditModal({
