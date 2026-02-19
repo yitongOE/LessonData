@@ -115,7 +115,6 @@
       openActionModal({
         title: "Modify Admin",
         desc: "You are about to modify this admin account. This change will take effect immediately.",
-        requiredText: `Edit ${admin.username}`,
         onConfirm: () => {
           openEditModal({
             title: `Edit Admin`,
@@ -147,7 +146,6 @@
       openActionModal({
         title: "Restore Latest Safe Version",
         desc: "This will restore ALL the admin accounts to the most recent safe version. ALL changes since last safe version will be lost. This action takes effect immediately.",
-        requiredText: `Restore ${admin.username}`,
         onConfirm: async () => {
           try {
             await restoreCSV("AdminData");
@@ -163,7 +161,6 @@
       openActionModal({
         title: "Delete Admin",
         desc: "This action cannot be undone. The deletion takes effect immediately.",
-        requiredText: `Delete ${admin.username}`,
         onConfirm: () => {
           console.log("Delete admin:", admin.id);
           //TODO

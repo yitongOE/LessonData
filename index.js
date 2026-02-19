@@ -14,8 +14,6 @@ const theadMarketplace = document.getElementById("thead-marketplace");
 const modal = document.getElementById("action-modal");
 const modalTitle = document.getElementById("modal-title");
 const modalDesc = document.getElementById("modal-desc");
-const modalRequiredText = document.getElementById("modal-requiredText");
-const passwordInput = document.getElementById("modal-password");
 const awareCheckbox = document.getElementById("modal-aware");
 const confirmBtn = document.getElementById("modal-confirm");
 const cancelBtn = document.getElementById("modal-cancel");
@@ -287,20 +285,17 @@ function createFooterController({ onPageChange }) {
 
 //#region ====== Action Confirmation Modal ======
 
-function openActionModal({ title, desc, requiredText, onConfirm }) {
-  // Initialization
+function openActionModal({ title, desc, onConfirm }) {
   modalTitle.textContent = title;
   modalDesc.textContent = desc;
-  modalRequiredText.textContent = `Type "${requiredText}" to confirm.`;
-  passwordInput.value = "";
+
   awareCheckbox.checked = false;
   confirmBtn.disabled = true;
   modal.classList.remove("hidden");
 
-  // Confirm Button only active when input is correct and aware is checked
-  const updateConfirmState = () => {confirmBtn.disabled = !(passwordInput.value === requiredText && awareCheckbox.checked);};
-  passwordInput.oninput = updateConfirmState;
-  awareCheckbox.onchange = updateConfirmState;
+  awareCheckbox.onchange = () => {
+    confirmBtn.disabled = !awareCheckbox.checked;
+  };
 
   pendingAction = onConfirm;
 }
@@ -384,7 +379,8 @@ function openEditModal({ title, data, fields, onSave, readonlyMode = false }) {
           const onLevelChange = e => {
             const v = Math.max(0, Number(e.target.value) || 0);
             draftData.levels = v;
-            syncContentWithLevels(v);
+            if (currentPanel === PANEL.GAMES) syncGameContentWithLevels(v);
+            else if (currentPanel === PANEL.MARKETPLACE) syncMarketplaceContentWithLevels(v);
           };
 
           input.oninput = onLevelChange;
@@ -527,10 +523,7 @@ async function saveGamesToServer(game) {
 
   const contentCSV = collectContentCSV();
 
-  const contentType =
-    game.key.includes("Sentence")
-      ? "sentences"
-      : "words";
+  const contentType = "content";
 
   const res = await fetch(
     "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveGamesCSV",
