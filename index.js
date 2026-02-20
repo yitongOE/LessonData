@@ -182,7 +182,7 @@ function setupIndexUI({ gamesCount = 0, adminsCount = 0, marketplaceCount = 0 })
   } else {
     // Header
     document.title = "Our English - Marketplace Management";
-    titleText.textContent = "Marketplace";
+    titleText.textContent = "Game Marketplace";
     itemCount.textContent = `(${marketplaceCount})`;
 
     // Toggle button

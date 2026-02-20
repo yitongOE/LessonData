@@ -197,6 +197,7 @@
         textarea.dataset.level = r.level;
         textarea.rows = 3;
         textarea.value = csvToTextarea(r.value);
+        textarea.style.width = "100%";
 
         if (readonlyMode) {
           textarea.disabled = true;
@@ -254,6 +255,7 @@
         textarea.dataset.level = i;
         textarea.rows = 3;
         textarea.value = csvToTextarea(existing[key]?.[i]);
+        textarea.style.width = "100%";
 
         if (readonlyMode) {
           textarea.disabled = true;

@@ -266,6 +266,29 @@ body {
   cursor: not-allowed;
 }
 
+#edit-form {
+  width: 100%;
+}
+
+.edit-field {
+  display: block;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.edit-field label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.edit-field input[type="text"],
+.edit-field input[type="number"],
+.edit-field select {
+  width: 60%;
+}
+
 /*#endregion */
 
 /*#region ====== Modal Content Column ====== */
