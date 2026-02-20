@@ -325,7 +325,7 @@
         desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
-            await restoreCSV(game.key);
+            await restoreCSV(`games/${game.key}`);
           } catch (e) {
             alert("Restore failed. Check server.");
           }

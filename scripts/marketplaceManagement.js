@@ -421,7 +421,10 @@
         desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
-            await restoreCSV(game.key);
+            await restoreCSV(`marketplace/${game.key}`);
+            mpgames = await loadMarketplaceFromCSV();
+            drawMarketplace();
+            showFooterMessage("✓ Restored to Safe Version");
           } catch (e) {
             alert("Restore failed. Check server.");
           }
