@@ -196,7 +196,7 @@
         textarea.dataset.contentKey = key;
         textarea.dataset.level = r.level;
         textarea.rows = 3;
-        textarea.value = r.value ?? "";
+        textarea.value = csvToTextarea(r.value);
 
         if (readonlyMode) {
           textarea.disabled = true;
@@ -253,7 +253,7 @@
         textarea.dataset.contentKey = key;
         textarea.dataset.level = i;
         textarea.rows = 3;
-        textarea.value = existing[key]?.[i] ?? "";
+        textarea.value = csvToTextarea(existing[key]?.[i]);
 
         if (readonlyMode) {
           textarea.disabled = true;

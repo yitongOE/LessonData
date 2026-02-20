@@ -461,6 +461,27 @@ async function loadCSV(url) {
   });
 }
 
+function csvToTextarea(value) {
+  return (value || "")
+    .replace(/;\s*/g, "\n")
+    .trim();
+}
+
+function textareaToCsv(value) {
+  return value
+    .split("\n")
+    .map(v => v.trim())
+    .filter(v => v.length > 0)
+    .join("; ") + "; ";
+}
+
+function formatMarketplacePreview(value) {
+  return (value || "")
+    .replace(/\|/g, "\n")
+    .replace(/;\s*/g, "\n")
+    .trim();
+}
+
 //#endregion
 
 //#region ====== Replace CSV ====== 
@@ -501,7 +522,7 @@ function collectContentCSV() {
   document.querySelectorAll("#edit-content textarea")
     .forEach(t => {
       const level = t.dataset.level;
-      const value = t.value.trim();
+      const value = textareaToCsv(t.value);
       rows.push([level, value]);
     });
 

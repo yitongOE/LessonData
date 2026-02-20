@@ -206,7 +206,7 @@
         textarea.dataset.contentKey = key;
         textarea.dataset.level = r.level;
         textarea.rows = 3;
-        textarea.value = r.value ?? "";
+        textarea.value = csvToTextarea(r.value);
 
         if (readonlyMode) {
           textarea.disabled = true;
@@ -259,9 +259,13 @@
         draftData.savedMergedMap[i] !== null;
 
       if (hasSavedValue && !draftData.previewDirty[i]) {
-        previewTextarea.value = draftData.savedMergedMap[i];
+        previewTextarea.value = formatMarketplacePreview(
+          draftData.savedMergedMap[i]
+        );
       } else {
-        previewTextarea.value = generateLevelMergedString(i);
+        previewTextarea.value = formatMarketplacePreview(
+          generateLevelMergedString(i)
+        );
       }
 
       const row = document.createElement("div");
@@ -285,7 +289,7 @@
           draftData.previewDirty[i] = true;
 
           const merged = generateLevelMergedString(i);
-          previewTextarea.value = merged;
+          previewTextarea.value = formatMarketplacePreview(merged);
 
           draftData.savedMergedMap[i] = merged;
         };
