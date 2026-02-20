@@ -239,6 +239,16 @@
         const row = document.createElement("div");
         row.className = "content-row";
 
+        const lessonTitle = document.createElement("div");
+        lessonTitle.className = "lesson-range-title";
+        const startLesson = (i - 1) * 5 + 1;
+        const endLesson = startLesson + 4;
+        lessonTitle.textContent = `Lesson ${startLesson}-${endLesson}`;
+        lessonTitle.style.fontSize = "13px";
+        lessonTitle.style.fontWeight = "600";
+        lessonTitle.style.marginBottom = "4px";
+        lessonTitle.style.color = "#666";
+
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
         textarea.dataset.level = i;
@@ -249,8 +259,8 @@
           textarea.disabled = true;
         }
 
+        row.appendChild(lessonTitle);
         row.appendChild(textarea);
-
         block.appendChild(row);
       }
 
