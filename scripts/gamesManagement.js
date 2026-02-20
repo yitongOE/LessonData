@@ -108,7 +108,6 @@
         <div class="actions">
           <button class="action-btn edit gameEditBtn" title="Edit">✏️</button>
           <button class="action-btn restore gameRestoreBtn" title="Restore">🔄</button>
-          <button class="action-btn delete gameDeleteBtn" title="Delete">🗑️</button>
           <button class="action-btn view gameViewBtn" title="View">🔎</button>
         </div>
       </td>
@@ -386,16 +385,16 @@
     };
 
     // "Delete" Button
-    row.querySelector(".delete").onclick = () => {
-      openActionModal({
-        title: "Delete Game",
-        desc: "This action cannot be undone. The deletion takes effect immediately.",
-        onConfirm: () => {
-          console.log("Delete", game.title);
-          //TODO
-        }
-      });
-    };
+    // row.querySelector(".delete").onclick = () => {
+    //   openActionModal({
+    //     title: "Delete Game",
+    //     desc: "This action cannot be undone. The deletion takes effect immediately.",
+    //     onConfirm: () => {
+    //       console.log("Delete", game.title);
+    //       //TODO
+    //     }
+    //   });
+    // };
 
     // "View" Button
     row.querySelector(".view").onclick = async() => {

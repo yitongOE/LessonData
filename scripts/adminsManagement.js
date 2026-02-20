@@ -80,7 +80,6 @@
         <div class="actions">
           <button class="action-btn edit" title="Edit">✏️</button>
           <button class="action-btn restore" title="Restore">🔄</button>
-          <button class="action-btn delete" title="Delete">🗑️</button>
         </div>
       </td>
 
@@ -156,16 +155,16 @@
     };
 
     // "Delete" Button
-    row.querySelector(".delete").onclick = () => {
-      openActionModal({
-        title: "Delete Admin",
-        desc: "This action cannot be undone. The deletion takes effect immediately.",
-        onConfirm: () => {
-          console.log("Delete admin:", admin.id);
-          //TODO
-        }
-      });
-    };
+    // row.querySelector(".delete").onclick = () => {
+    //   openActionModal({
+    //     title: "Delete Admin",
+    //     desc: "This action cannot be undone. The deletion takes effect immediately.",
+    //     onConfirm: () => {
+    //       console.log("Delete admin:", admin.id);
+    //       //TODO
+    //     }
+    //   });
+    // };
 
     // "Active" Switch
     const toggle = row.querySelector(".switch-yn input");
