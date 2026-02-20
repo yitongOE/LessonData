@@ -122,7 +122,7 @@
               { key: "firstname", label: "First Name" },
               { key: "lastname", label: "Last Name" },
               { key: "email", label: "Email" },
-              { key: "role", label: "Role", type: "select", options: ["Admin", "QA", "Guest"] },
+              { key: "role", label: "Role", type: "select", options: ["Admin", "Editor", "QA"] },
               { key: "active", label: "Active", type: "checkbox" }
             ],
             onSave: async () => {
