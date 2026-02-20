@@ -218,6 +218,7 @@
     const container = document.getElementById("edit-content");
     if (!container) return;
 
+    // Preserve existing textarea edits before re-render
     const existing = {};
     container.querySelectorAll("textarea").forEach(t => {
       const key = t.dataset.contentKey;
@@ -239,6 +240,14 @@
       for (let i = 1; i <= levelCount; i++) {
         const row = document.createElement("div");
         row.className = "content-row";
+        row.style.marginBottom = "18px";
+
+        // ===== Lesson header (title + toggle) =====
+        const header = document.createElement("div");
+        header.style.display = "flex";
+        header.style.justifyContent = "space-between";
+        header.style.alignItems = "center";
+        header.style.cursor = "pointer";
 
         const lessonTitle = document.createElement("div");
         lessonTitle.className = "lesson-range-title";
@@ -247,8 +256,26 @@
         lessonTitle.textContent = `Lesson ${startLesson}-${endLesson}`;
         lessonTitle.style.fontSize = "13px";
         lessonTitle.style.fontWeight = "600";
-        lessonTitle.style.marginBottom = "4px";
         lessonTitle.style.color = "#666";
+        lessonTitle.style.margin = "0";
+        lessonTitle.style.padding = "0";
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.type = "button";
+        toggleBtn.textContent = "▾"; // expanded by default
+        toggleBtn.style.border = "none";
+        toggleBtn.style.background = "transparent";
+        toggleBtn.style.fontSize = "16px";
+        toggleBtn.style.cursor = "pointer";
+        toggleBtn.style.padding = "0 4px";
+        toggleBtn.style.lineHeight = "1";
+
+        header.appendChild(lessonTitle);
+        header.appendChild(toggleBtn);
+
+        // ===== Collapsible content =====
+        const contentWrapper = document.createElement("div");
+        contentWrapper.style.marginTop = "6px";
 
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
@@ -261,8 +288,26 @@
           textarea.disabled = true;
         }
 
-        row.appendChild(lessonTitle);
-        row.appendChild(textarea);
+        contentWrapper.appendChild(textarea);
+
+        // ===== Collapse logic =====
+        let collapsed = false;
+
+        const toggle = () => {
+          collapsed = !collapsed;
+          contentWrapper.style.display = collapsed ? "none" : "block";
+          toggleBtn.textContent = collapsed ? "▸" : "▾";
+        };
+
+        // click header toggles (but don't toggle when clicking inside textarea)
+        header.onclick = toggle;
+        toggleBtn.onclick = (e) => {
+          e.stopPropagation();
+          toggle();
+        };
+
+        row.appendChild(header);
+        row.appendChild(contentWrapper);
         block.appendChild(row);
       }
 

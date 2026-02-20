@@ -243,10 +243,28 @@
 
       const section = document.createElement("div");
       section.className = "level-section";
+      section.style.marginBottom = "25px";
+
+      const header = document.createElement("div");
+      header.style.display = "flex";
+      header.style.justifyContent = "space-between";
+      header.style.alignItems = "center";
+      header.style.cursor = "pointer";
 
       const title = document.createElement("h4");
       title.textContent = `Level ${i}`;
-      section.appendChild(title);
+      title.style.margin = "0";
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.textContent = "▾";   // 默认展开箭头
+      toggleBtn.style.border = "none";
+      toggleBtn.style.background = "transparent";
+      toggleBtn.style.fontSize = "16px";
+      toggleBtn.style.cursor = "pointer";
+
+      header.appendChild(title);
+      header.appendChild(toggleBtn);
+      section.appendChild(header);
 
       const previewTextarea = document.createElement("textarea");
       previewTextarea.rows = 4;
@@ -305,8 +323,20 @@
         row.appendChild(label);
       }
 
-      section.appendChild(row);
-      section.appendChild(previewTextarea);
+      const contentWrapper = document.createElement("div");
+      contentWrapper.appendChild(row);
+      contentWrapper.appendChild(previewTextarea);
+
+      section.appendChild(contentWrapper);
+
+      let collapsed = false;
+
+      header.onclick = () => {
+        collapsed = !collapsed;
+
+        contentWrapper.style.display = collapsed ? "none" : "block";
+        toggleBtn.textContent = collapsed ? "▸" : "▾";
+      };
       chapterWrapper.appendChild(section);
     }
 
