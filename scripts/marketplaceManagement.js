@@ -84,6 +84,16 @@
     }
   }
 
+  async function loadMarketplaceSelectedCSV(game) {
+    const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/selected.csv?t=${Date.now()}`;
+
+    try {
+      return await loadCSV(url);
+    } catch {
+      return null;
+    }
+  }
+
   //#endregion
 
   //#region ====== Header ======
@@ -187,23 +197,23 @@
       block.appendChild(h4);
 
       rows.forEach(r => {
-        const chapter = Number(r.chapter);
+        const level = Number(r.level);
 
         const rowDiv = document.createElement("div");
         rowDiv.className = "content-row";
 
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
-        textarea.dataset.chapter = r.chapter;
+        textarea.dataset.level = r.level;
         textarea.rows = 3;
-        textarea.value = r.value ?? "";
+        textarea.value = csvToTextarea(r.value);
 
         if (readonlyMode) {
           textarea.disabled = true;
           textarea.classList.add("readonly-field");
         }
 
-        rowDiv.appendChild(document.createElement("div")).textContent = `chapter ${chapter}`;
+        rowDiv.appendChild(document.createElement("div")).textContent = `Level ${level}`;
         rowDiv.appendChild(textarea);
 
         block.appendChild(rowDiv);
@@ -213,50 +223,162 @@
     });
   }
 
-  window.syncMarketplaceContentWithLevels = function (levelCount, readonlyMode = true) {
+  window.syncMarketplaceContentWithLevels = function (levelCount, readonlyMode = false) {
     const container = document.getElementById("edit-content");
     if (!container) return;
 
-    const existing = {};
-    container.querySelectorAll("textarea").forEach(t => {
-      const key = t.dataset.contentKey;
-      const chapter = Number(t.dataset.chapter);
-      if (!existing[key]) existing[key] = {};
-      existing[key][chapter] = t.value;
-    });
+    if (!draftData.chapterMap) draftData.chapterMap = {};
+    if (!draftData.savedMergedMap) draftData.savedMergedMap = {};
+    if (!draftData.previewDirty) draftData.previewDirty = {};
 
     container.innerHTML = "";
 
-    currentContentKeys.forEach(({ key, label }) => {
-      const block = document.createElement("div");
-      block.className = "content-block";
+    const chapterWrapper = document.createElement("div");
+    chapterWrapper.className = "chapter-sections";
 
-      const h4 = document.createElement("h4");
-      h4.textContent = label;
-      block.appendChild(h4);
-
-      for (let i = 1; i <= levelCount; i++) {
-        const row = document.createElement("div");
-        row.className = "content-row";
-
-        const textarea = document.createElement("textarea");
-        textarea.dataset.contentKey = key;
-        textarea.dataset.chapter = i;
-        textarea.rows = 3;
-        textarea.value = existing[key]?.[i] ?? "";
-
-        if (readonlyMode) {
-          textarea.disabled = true;
-        }
-
-        row.appendChild(textarea);
-
-        block.appendChild(row);
+    for (let i = 1; i <= levelCount; i++) {
+      if (!draftData.chapterMap[i]) {
+        draftData.chapterMap[i] = [false, false, false, false, false, false];
       }
 
-      container.appendChild(block);
-    });
+      const section = document.createElement("div");
+      section.className = "level-section";
+      section.style.marginBottom = "25px";
+
+      const header = document.createElement("div");
+      header.style.display = "flex";
+      header.style.justifyContent = "space-between";
+      header.style.alignItems = "center";
+      header.style.cursor = "pointer";
+
+      const title = document.createElement("h4");
+      title.textContent = `Level ${i}`;
+      title.style.margin = "0";
+
+      const toggleBtn = document.createElement("button");
+      toggleBtn.textContent = "▾";   // 默认展开箭头
+      toggleBtn.style.border = "none";
+      toggleBtn.style.background = "transparent";
+      toggleBtn.style.fontSize = "16px";
+      toggleBtn.style.cursor = "pointer";
+
+      header.appendChild(title);
+      header.appendChild(toggleBtn);
+      section.appendChild(header);
+
+      const previewTextarea = document.createElement("textarea");
+      previewTextarea.rows = 4;
+      previewTextarea.style.width = "100%";
+      previewTextarea.style.marginTop = "10px";
+      previewTextarea.readOnly = true;
+
+      const hasSavedValue =
+        draftData.savedMergedMap[i] !== undefined &&
+        draftData.savedMergedMap[i] !== null;
+
+      if (hasSavedValue && !draftData.previewDirty[i]) {
+        previewTextarea.value = formatMarketplacePreview(
+          draftData.savedMergedMap[i]
+        );
+      } else {
+        previewTextarea.value = formatMarketplacePreview(
+          generateLevelMergedString(i)
+        );
+      }
+
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.gap = "20px";
+      row.style.marginBottom = "20px";
+
+      for (let c = 0; c < 6; c++) {
+        const label = document.createElement("label");
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "5px";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = draftData.chapterMap[i][c];
+        checkbox.disabled = readonlyMode;
+
+        checkbox.onchange = () => {
+          draftData.chapterMap[i][c] = checkbox.checked;
+          draftData.previewDirty[i] = true;
+
+          const merged = generateLevelMergedString(i);
+          previewTextarea.value = formatMarketplacePreview(merged);
+
+          draftData.savedMergedMap[i] = merged;
+        };
+
+        label.appendChild(checkbox);
+
+        const startLesson = c * 5 + 1;
+        const endLesson = startLesson + 4;
+        label.appendChild(
+          document.createTextNode(`Lesson ${startLesson}-${endLesson}`)
+        );
+
+        row.appendChild(label);
+      }
+
+      const contentWrapper = document.createElement("div");
+      contentWrapper.appendChild(row);
+      contentWrapper.appendChild(previewTextarea);
+
+      section.appendChild(contentWrapper);
+
+      let collapsed = false;
+
+      header.onclick = () => {
+        collapsed = !collapsed;
+
+        contentWrapper.style.display = collapsed ? "none" : "block";
+        toggleBtn.textContent = collapsed ? "▸" : "▾";
+      };
+      chapterWrapper.appendChild(section);
+    }
+
+    container.appendChild(chapterWrapper);
   };
+
+  function generateLevelMergedString(level) {
+    if (!draftData.chapterMap || !draftData.contentMap) return "";
+
+    const selectedChapters = draftData.chapterMap[level] || [];
+    let merged = [];
+
+    selectedChapters.forEach((checked, index) => {
+      if (checked) {
+        const chapter = index + 1;
+        const content = draftData.contentMap[chapter];
+        if (content) merged.push(content);
+      }
+    });
+
+    return merged.join("|");
+  }
+
+  function collectSelectedCSV() {
+    if (!draftData.chapterMap) return "level,selected,value\n";
+
+    const rows = [];
+
+    for (let level = 1; level <= draftData.levels; level++) {
+      const arr = draftData.chapterMap[level] || [false, false, false, false, false, false];
+      const selected = arr
+        .map((checked, index) => checked ? index + 1 : null)
+        .filter(Boolean)
+        .join("|");
+
+      const merged = generateLevelMergedString(level);
+      rows.push(`${level},${selected},"${merged}"`);
+    }
+
+    return "level,selected,value\n" + rows.join("\n");
+  }
+
 
   // Bind actions with interactctive UI components
   function bindMarketplaceInteractiveUI(row, game) {
@@ -267,25 +389,8 @@
         desc: "You are about to modify this game. This change will take effect immediately.",
         onConfirm: async () => {
           const fields = await getEditorFieldsFromRules(game);
-
           const contentKeys = [];
           currentContentKeys = contentKeys;
-
-          if (await hasMarketplaceContentCSV(game)) {
-            let label = "Content";
-
-            if (game.key.toLowerCase().includes("sentence")) label = "Sentences";
-            else label = "Words";
-
-            contentKeys.push({ key: "content", label });
-          }
-
-          const contents = {};
-
-          if (contentKeys.length > 0) {
-            const rows = await loadMarketplaceContentCSV(game);
-            if (rows) contents["content"] = rows;
-          }
 
           openEditModal({
             title: `Edit ${game.title}`,
@@ -293,7 +398,7 @@
             fields,
             onSave: async (updatedGame) => {
               try {
-                await saveMarketplaceToServer(updatedGame);
+                await saveMarketplaceToServer(updatedGame, collectSelectedCSV());
                 drawMarketplace();
                 showFooterMessage("✓ Saved to CSV");
               } catch (e) {
@@ -302,7 +407,45 @@
             }
           });
 
-          renderEditorContent(contents, contentKeys);
+          let selectedRows = await loadMarketplaceSelectedCSV(game);
+
+          if (selectedRows) {
+            draftData.chapterMap = {};
+            draftData.savedMergedMap = {};
+
+            selectedRows.forEach(r => {
+              const level = Number(r.level);
+              const selectedArr = (r.selected || "")
+                .split("|")
+                .map(n => Number(n));
+
+              draftData.chapterMap[level] =
+                [false, false, false, false, false, false];
+
+              selectedArr.forEach(ch => {
+                if (ch >= 1 && ch <= 6) {
+                  draftData.chapterMap[level][ch - 1] = true;
+                }
+              });
+
+              // Remove "" outside string if any
+              let raw = r.value || "";
+              if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
+              draftData.savedMergedMap[level] = raw;
+            });
+          }
+
+          let contentRows = await loadMarketplaceContentCSV(game);
+
+          if (contentRows) {
+            draftData.contentMap = {};
+
+            contentRows.forEach(r => {
+              const chapter = Number(r.chapter);
+              draftData.contentMap[chapter] = r.value || "";
+            });
+          }
+
           syncMarketplaceContentWithLevels(draftData.levels);
         }
       });
@@ -315,7 +458,10 @@
         desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
-            await restoreCSV(game.key);
+            await restoreCSV(`marketplace/${game.key}`);
+            mpgames = await loadMarketplaceFromCSV();
+            drawMarketplace();
+            showFooterMessage("✓ Restored to Safe Version");
           } catch (e) {
             alert("Restore failed. Check server.");
           }

@@ -196,7 +196,8 @@
         textarea.dataset.contentKey = key;
         textarea.dataset.level = r.level;
         textarea.rows = 3;
-        textarea.value = r.value ?? "";
+        textarea.value = csvToTextarea(r.value);
+        textarea.style.width = "100%";
 
         if (readonlyMode) {
           textarea.disabled = true;
@@ -213,10 +214,11 @@
     });
   }
 
-  window.syncGameContentWithLevels = function (levelCount, readonlyMode = true) {
+  window.syncGameContentWithLevels = function (levelCount, readonlyMode = false) {
     const container = document.getElementById("edit-content");
     if (!container) return;
 
+    // Preserve existing textarea edits before re-render
     const existing = {};
     container.querySelectorAll("textarea").forEach(t => {
       const key = t.dataset.contentKey;
@@ -238,19 +240,74 @@
       for (let i = 1; i <= levelCount; i++) {
         const row = document.createElement("div");
         row.className = "content-row";
+        row.style.marginBottom = "18px";
+
+        // ===== Lesson header (title + toggle) =====
+        const header = document.createElement("div");
+        header.style.display = "flex";
+        header.style.justifyContent = "space-between";
+        header.style.alignItems = "center";
+        header.style.cursor = "pointer";
+
+        const lessonTitle = document.createElement("div");
+        lessonTitle.className = "lesson-range-title";
+        const startLesson = (i - 1) * 5 + 1;
+        const endLesson = startLesson + 4;
+        lessonTitle.textContent = `Lesson ${startLesson}-${endLesson}`;
+        lessonTitle.style.fontSize = "13px";
+        lessonTitle.style.fontWeight = "600";
+        lessonTitle.style.color = "#666";
+        lessonTitle.style.margin = "0";
+        lessonTitle.style.padding = "0";
+
+        const toggleBtn = document.createElement("button");
+        toggleBtn.type = "button";
+        toggleBtn.textContent = "▾"; // expanded by default
+        toggleBtn.style.border = "none";
+        toggleBtn.style.background = "transparent";
+        toggleBtn.style.fontSize = "16px";
+        toggleBtn.style.cursor = "pointer";
+        toggleBtn.style.padding = "0 4px";
+        toggleBtn.style.lineHeight = "1";
+
+        header.appendChild(lessonTitle);
+        header.appendChild(toggleBtn);
+
+        // ===== Collapsible content =====
+        const contentWrapper = document.createElement("div");
+        contentWrapper.style.marginTop = "6px";
 
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
         textarea.dataset.level = i;
         textarea.rows = 3;
-        textarea.value = existing[key]?.[i] ?? "";
+        textarea.value = csvToTextarea(existing[key]?.[i]);
+        textarea.style.width = "100%";
 
         if (readonlyMode) {
           textarea.disabled = true;
         }
 
-        row.appendChild(textarea);
+        contentWrapper.appendChild(textarea);
 
+        // ===== Collapse logic =====
+        let collapsed = false;
+
+        const toggle = () => {
+          collapsed = !collapsed;
+          contentWrapper.style.display = collapsed ? "none" : "block";
+          toggleBtn.textContent = collapsed ? "▸" : "▾";
+        };
+
+        // click header toggles (but don't toggle when clicking inside textarea)
+        header.onclick = toggle;
+        toggleBtn.onclick = (e) => {
+          e.stopPropagation();
+          toggle();
+        };
+
+        row.appendChild(header);
+        row.appendChild(contentWrapper);
         block.appendChild(row);
       }
 
@@ -303,7 +360,7 @@
           });
 
           renderEditorContent(contents, contentKeys);
-          syncGameContentWithLevels(draftData.levels);
+          syncGameContentWithLevels(draftData.levels, false);
         }
       });
     };
@@ -315,7 +372,7 @@
         desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
-            await restoreCSV(game.key);
+            await restoreCSV(`games/${game.key}`);
           } catch (e) {
             alert("Restore failed. Check server.");
           }
@@ -368,7 +425,7 @@
       });
 
       renderEditorContent(contents, contentKeys, true);
-      syncGameContentWithLevels(game.levels);
+      syncGameContentWithLevels(game.levels, true);
     };
 
     // "Active" Switch
