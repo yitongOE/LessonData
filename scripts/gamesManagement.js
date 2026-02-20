@@ -342,7 +342,10 @@
         contentWrapper.appendChild(textarea);
 
         // ===== Fold-textbox Button =====
-        let collapsed = false;
+        let collapsed = true;
+        contentWrapper.style.display = "none";
+        toggleBtn.textContent = "▸";
+
         const toggle = () => {
           collapsed = !collapsed;
           contentWrapper.style.display = collapsed ? "none" : "block";
