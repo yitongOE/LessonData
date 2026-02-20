@@ -182,7 +182,7 @@ function setupIndexUI({ gamesCount = 0, adminsCount = 0, marketplaceCount = 0 })
   } else {
     // Header
     document.title = "Our English - Marketplace Management";
-    titleText.textContent = "Marketplace";
+    titleText.textContent = "Game Marketplace";
     itemCount.textContent = `(${marketplaceCount})`;
 
     // Toggle button
@@ -375,17 +375,22 @@ function openEditModal({ title, data, fields, onSave, readonlyMode = false }) {
       input.value = draftData[field.key] ?? "";
       
       if (field.key === "levels") {
-        input.oninput = e => {
-          const onLevelChange = e => {
-            const v = Math.max(0, Number(e.target.value) || 0);
-            draftData.levels = v;
-            if (currentPanel === PANEL.GAMES) syncGameContentWithLevels(v);
-            else if (currentPanel === PANEL.MARKETPLACE) syncMarketplaceContentWithLevels(v);
-          };
+        const onLevelChange = e => {
+          const v = Math.max(0, Number(e.target.value) || 0);
+          draftData.levels = v;
 
-          input.oninput = onLevelChange;
-          input.onchange = onLevelChange;
-        }
+          const panelNow = getPanel();
+
+          if (panelNow === PANEL.GAMES && typeof syncGameContentWithLevels === "function") {
+            syncGameContentWithLevels(v);
+          } 
+          else if (panelNow === PANEL.MARKETPLACE && typeof syncMarketplaceContentWithLevels === "function") {
+            syncMarketplaceContentWithLevels(v);
+          }
+        };
+
+        input.oninput = onLevelChange;
+        input.onchange = onLevelChange;
       } else {
         input.oninput = e => {
           draftData[field.key] = e.target.value;
@@ -456,6 +461,27 @@ async function loadCSV(url) {
   });
 }
 
+function csvToTextarea(value) {
+  return (value || "")
+    .replace(/;\s*/g, "\n")
+    .trim();
+}
+
+function textareaToCsv(value) {
+  return value
+    .split("\n")
+    .map(v => v.trim())
+    .filter(v => v.length > 0)
+    .join("; ") + "; ";
+}
+
+function formatMarketplacePreview(value) {
+  return (value || "")
+    .replace(/\|/g, "\n")
+    .replace(/;\s*/g, "\n")
+    .trim();
+}
+
 //#endregion
 
 //#region ====== Replace CSV ====== 
@@ -496,7 +522,7 @@ function collectContentCSV() {
   document.querySelectorAll("#edit-content textarea")
     .forEach(t => {
       const level = t.dataset.level;
-      const value = t.value.trim();
+      const value = textareaToCsv(t.value);
       rows.push([level, value]);
     });
 
@@ -547,7 +573,7 @@ async function saveGamesToServer(game) {
 }
 
 // For Marketplace Panel
-async function saveMarketplaceToServer(game) {
+async function saveMarketplaceToServer(game, selectedCSV) {
 
   const configRows = [
     ["version", game.version],
@@ -580,7 +606,8 @@ async function saveMarketplaceToServer(game) {
         gameKey: game.key,
         configCSV,
         contentCSV,
-        contentType
+        contentType,
+        selectedCSV
       })
     }
   );
