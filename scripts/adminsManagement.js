@@ -34,7 +34,7 @@
 
       return {
         id: Number(raw.id),
-        username: raw.username,
+        username: raw.email ? raw.email.split("@")[0] : "",
         firstname: raw.firstname,
         lastname: raw.lastname,
         email: raw.email,
@@ -120,7 +120,6 @@
             title: `Edit Admin`,
             data: admin,
             fields: [
-              { key: "username", label: "Username" },
               { key: "firstname", label: "First Name" },
               { key: "lastname", label: "Last Name" },
               { key: "email", label: "Email" },
