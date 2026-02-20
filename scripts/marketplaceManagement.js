@@ -398,7 +398,12 @@
             onSave: async (updatedGame) => {
               try {
                 await saveMarketplaceToServer(updatedGame, collectSelectedCSV());
+
+                mpgames = await loadMarketplaceFromCSV();
+
+                footer.setTotalItems(mpgames.length);
                 drawMarketplace();
+
                 showFooterMessage("✓ Saved to CSV");
               } catch (e) {
                 alert("Save failed. Check server.");
@@ -513,7 +518,7 @@
       });
 
       renderEditorContent(contents, contentKeys, true);
-      syncMarketplaceContentWithLevels(game.levels);
+      syncMarketplaceContentWithLevels(game.levels, true);
     };
 
     // "Active" Switch

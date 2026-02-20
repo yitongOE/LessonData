@@ -307,9 +307,13 @@
 
         textarea.oninput = e => {
           let existingRow = allContentRows.find(r => Number(r.level) === i);
-          if (existingRow) {
-            existingRow.value = textareaToCsv(e.target.value);
+
+          if (!existingRow) {
+            existingRow = { level: i, value: "" };
+            allContentRows.push(existingRow);
           }
+
+          existingRow.value = textareaToCsv(e.target.value);
         };
 
         contentWrapper.appendChild(textarea);
@@ -375,7 +379,12 @@
             onSave: async (updatedGame) => {
               try {
                 await saveGamesToServer(updatedGame);
+
+                rvgames = await loadGamesFromCSV();
+
+                footer.setTotalItems(rvgames.length);
                 drawGames();
+
                 showFooterMessage("✓ Saved to CSV");
               } catch (e) {
                 alert("Save failed. Check server.");

@@ -444,10 +444,17 @@ function openEditModal({ title, data, fields, onSave, readonlyMode = false }) {
   // Save editing
   const saveBtn = document.getElementById("edit-save");
   saveBtn.style.display = readonlyMode ? "none" : "";
-  saveBtn.onclick = () => {
+  saveBtn.onclick = async() => {
     Object.assign(editingTarget, draftData);
-    if (onSave) onSave(editingTarget);
-    closeEditModal();
+
+    try {
+      if (onSave) {
+        await onSave(editingTarget);
+      }
+      closeEditModal();
+    } catch (err) {
+      console.error(err);
+    }
   };
 }
 
@@ -537,26 +544,23 @@ function toCSV(headers, rows) {
 }
 
 // For Games Panel
-function collectContentCSV() {
-  const rows = [];
-  document.querySelectorAll("#edit-content textarea")
-    .forEach(t => {
-      const level = t.dataset.level;
-      const value = textareaToCsv(t.value);
-      rows.push([level, value]);
-    });
+function collectContentCSV(game) {
+  const rows = (game.content || [])
+    .sort((a, b) => Number(a.level) - Number(b.level));
 
   return "level,value\n" +
-         rows.map(r => `${r[0]},${r[1]}`).join("\n");
+    rows.map(r => `${r.level},${r.value || ""}`).join("\n");
 }
 
 async function saveGamesToServer(game) {
+  game.updatedAt = new Date().toLocaleString();
+  game.updatedBy = window.currentUser?.email || "unknown";
 
   const configRows = [
     ["version", game.version],
     ["title", game.title],
     ["active", game.active ? "true" : "false"],
-    ["levels", game.levels],
+    ["eduLevel", game.eduLevel],
     ["updatedAt", game.updatedAt || "1/1/2000"],
     ["updatedBy", game.updatedBy || "testuser"],
     ["lightning_timer", game.lightning_timer || 90],
@@ -567,7 +571,7 @@ async function saveGamesToServer(game) {
     "key,value\n" +
     configRows.map(r => `${r[0]},${r[1]}`).join("\n");
 
-  const contentCSV = collectContentCSV();
+  const contentCSV = collectContentCSV(game);
 
   const contentType = "content";
 
@@ -594,6 +598,8 @@ async function saveGamesToServer(game) {
 
 // For Marketplace Panel
 async function saveMarketplaceToServer(game, selectedCSV) {
+  game.updatedAt = new Date().toLocaleString();
+  game.updatedBy = window.currentUser?.email || "unknown";
 
   const configRows = [
     ["version", game.version],
@@ -610,8 +616,6 @@ async function saveMarketplaceToServer(game, selectedCSV) {
     "key,value\n" +
     configRows.map(r => `${r[0]},${r[1]}`).join("\n");
 
-  const contentCSV = collectContentCSV();
-
   const contentType =
     game.key.includes("Sentence")
       ? "sentences"
@@ -625,8 +629,6 @@ async function saveMarketplaceToServer(game, selectedCSV) {
       body: JSON.stringify({
         gameKey: game.key,
         configCSV,
-        contentCSV,
-        contentType,
         selectedCSV
       })
     }
