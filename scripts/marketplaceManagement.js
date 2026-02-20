@@ -329,7 +329,9 @@
 
       section.appendChild(contentWrapper);
 
-      let collapsed = false;
+      let collapsed = true;
+      contentWrapper.style.display = "none";
+      toggleBtn.textContent = "▸";
 
       header.onclick = () => {
         collapsed = !collapsed;
