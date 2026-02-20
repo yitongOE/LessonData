@@ -168,6 +168,7 @@
 
       if (r.key === "active") field.type = "checkbox";
       if (r.key === "levels") field.type = "number";
+      if (r.key === "block_highlight") field.type = "checkbox";
 
       return field;
     });

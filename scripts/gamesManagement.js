@@ -157,6 +157,7 @@
       };
 
       if (r.key === "active") field.type = "checkbox";
+      if (r.key === "block_highlight") field.type = "checkbox";
 
       if (r.key === "eduLevel") {
         field.type = "select";
