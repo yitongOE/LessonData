@@ -273,6 +273,7 @@
 
         checkbox.onchange = () => {
           draftData.chapterMap[i][c] = checkbox.checked;
+          previewTextarea.value = generateLevelMergedString(i);
         };
 
         label.appendChild(checkbox);
@@ -285,10 +286,36 @@
 
       section.appendChild(row);
       chapterWrapper.appendChild(section);
+
+      const previewTextarea = document.createElement("textarea");
+      previewTextarea.rows = 4;
+      previewTextarea.style.width = "100%";
+      previewTextarea.style.marginTop = "10px";
+      previewTextarea.readOnly = true;
+      previewTextarea.value = generateLevelMergedString(i);
+
+      section.appendChild(previewTextarea);
     }
 
     container.appendChild(chapterWrapper);
   };
+
+  function generateLevelMergedString(level) {
+    if (!draftData.chapterMap || !draftData.contentMap) return "";
+
+    const selectedChapters = draftData.chapterMap[level] || [];
+    let merged = [];
+
+    selectedChapters.forEach((checked, index) => {
+      if (checked) {
+        const chapter = index + 1;
+        const content = draftData.contentMap[chapter];
+        if (content) merged.push(content);
+      }
+    });
+
+    return merged.join("|");
+  }
 
   function collectSelectedCSV() {
     if (!draftData.chapterMap) return "level,selected,value\n";
@@ -302,7 +329,8 @@
         .filter(Boolean)
         .join("|");
 
-      rows.push(`${level},${selected},`);
+      const merged = generateLevelMergedString(level);
+      rows.push(`${level},${selected},"${merged}"`);
     }
 
     return "level,selected,value\n" + rows.join("\n");
@@ -354,6 +382,17 @@
                   draftData.chapterMap[level][ch - 1] = true;
                 }
               });
+            });
+          }
+
+          let contentRows = await loadMarketplaceContentCSV(game);
+
+          if (contentRows) {
+            draftData.contentMap = {};
+
+            contentRows.forEach(r => {
+              const chapter = Number(r.chapter);
+              draftData.contentMap[chapter] = r.value || "";
             });
           }
 
