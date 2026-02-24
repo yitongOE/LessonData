@@ -588,6 +588,13 @@ function formatMarketplacePreview(value) {
     .trim();
 }
 
+// Transfer boolean and number to correct formats
+window.parseValue = function(raw) {
+  if (raw === "true" || raw === "false") return raw === "true";
+  if (!isNaN(raw)) return Number(raw);
+  return raw;
+};
+
 //#endregion
 
 //#region ====== Replace CSV ====== 

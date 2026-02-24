@@ -4,7 +4,6 @@
   const ADMIN_ROLES = ["Admin", "Editor", "QA"];
 
   let admins = [];
-  let footer = null;
   let adminsController = null;
 
   //#endregion
@@ -43,15 +42,6 @@
         active: raw.active === "true"
       };
     });
-  }
-
-  //#endregion
-
-  //#region ====== Header ======
-
-  function updateAdminCount() {
-    const countEl = document.getElementById("item-count");
-    countEl.textContent = `(${admins.length})`;
   }
 
   //#endregion

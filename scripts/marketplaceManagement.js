@@ -2,7 +2,6 @@
   //#region ====== Variables ======
 
   let mpgames = [];
-  let footer = null;
   let panelKeys = [];
   let panelKeySet = new Set();
   let currentContentKeys = [];
@@ -59,12 +58,6 @@
     return games;
   }
 
-  function parseValue(raw) {
-    if (raw === "true" || raw === "false") return raw === "true";
-    if (!isNaN(raw)) return Number(raw);
-    return raw;
-  }
-
   async function hasMarketplaceContentCSV(game) {
     const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/content.csv`;
     try {
@@ -93,15 +86,6 @@
     } catch {
       return null;
     }
-  }
-
-  //#endregion
-
-  //#region ====== Header ======
-
-  function updateMarketplaceCount() {
-    const countEl = document.getElementById("item-count");
-    countEl.textContent = `(${mpgames.length})`;
   }
 
   //#endregion

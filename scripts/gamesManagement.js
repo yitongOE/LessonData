@@ -2,7 +2,6 @@
   //#region ====== Variables ======
 
   let rvgames = [];
-  let footer = null;
   let panelKeys = [];
   let panelKeySet = new Set();
   let currentContentKeys = [];
@@ -59,12 +58,6 @@
     return games;
   }
 
-  function parseValue(raw) {
-    if (raw === "true" || raw === "false") return raw === "true";
-    if (!isNaN(raw)) return Number(raw);
-    return raw;
-  }
-
   async function hasGameContentCSV(game) {
     const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/content.csv`;
     try {
@@ -83,15 +76,6 @@
     } catch (e) {
       return null;
     }
-  }
-
-  //#endregion
-
-  //#region ====== Header ======
-
-  function updateGameCount() {
-    const countEl = document.getElementById("item-count");
-    countEl.textContent = `(${rvgames.length})`;
   }
 
   //#endregion
