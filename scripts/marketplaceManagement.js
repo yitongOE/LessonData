@@ -241,7 +241,7 @@
       title.style.margin = "0";
 
       const toggleBtn = document.createElement("button");
-      toggleBtn.textContent = "▾";   // 默认展开箭头
+      toggleBtn.textContent = "▾";
       toggleBtn.style.border = "none";
       toggleBtn.style.background = "transparent";
       toggleBtn.style.fontSize = "16px";
