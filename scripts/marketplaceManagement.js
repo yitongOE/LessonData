@@ -108,6 +108,52 @@
     return { level, lesson };
   }
 
+  function ensureDeletedMaps(round) {
+    if (!draftData.deletedByLesson) draftData.deletedByLesson = {};
+    if (!draftData.deletedByLesson[round]) draftData.deletedByLesson[round] = {};
+  }
+
+  function getLessonWords(level, lesson) {
+    const raw = (draftData.lessonContentMap?.[level]?.[lesson] || "").trim();
+    if (!raw) return [];
+
+    return raw
+      .split(/[|;\n,，；]+/g)
+      .map(s => s.trim())
+      .filter(Boolean);
+  }
+
+  // Returns tokens: [{ lessonCode, idx, word }]
+  function getRoundTokens(round) {
+    const selected = draftData.roundMap?.[round]?.selectedLessons || [];
+    const tokens = [];
+
+    selected.forEach(lessonCode => {
+      const parsed = parseLessonCode(lessonCode);
+      if (!parsed) return;
+
+      const words = getLessonWords(parsed.level, parsed.lesson);
+      for (let i = 0; i < words.length; i++) {
+        tokens.push({ lessonCode, idx: i, word: words[i] });
+      }
+    });
+
+    return tokens;
+  }
+
+  function isTokenDeleted(round, token) {
+    ensureDeletedMaps(round);
+    const set = draftData.deletedByLesson[round][token.lessonCode];
+    return set ? set.has(token.idx) : false;
+  }
+
+  function buildMergedStringFromTokens(round) {
+    ensureDeletedMaps(round);
+    const tokens = getRoundTokens(round);
+    const kept = tokens.filter(t => !isTokenDeleted(round, t));
+    return kept.map(t => t.word).join("|");
+  }
+
   //#endregion
 
   //#region ====== Table ======
@@ -383,14 +429,68 @@
       previewTextarea.className = "round-preview";
       previewTextarea.readOnly = true;
 
-      const hasSaved = draftData.savedMergedMap[round] !== undefined && draftData.savedMergedMap[round] !== null;
-      previewTextarea.value = formatMarketplacePreview(
-        hasSaved && !draftData.previewDirty[round]
-          ? draftData.savedMergedMap[round]
-          : generateRoundMergedString_lessonMerge(round)
-      );
+      let visibleTokens = [];
 
-      // build level blocks
+      function renderPreview() {
+        if (draftData.savedMergedMap?.[round] && !draftData.previewDirty?.[round]) {
+          previewTextarea.value =
+            draftData.savedMergedMap[round]
+              .split("|")
+              .join("\n");
+          return;
+        }
+
+        const tokens = getRoundTokens(round).filter(t => !isTokenDeleted(round, t));
+        visibleTokens = tokens;
+
+        previewTextarea.value = tokens.map(t => t.word).join("\n");
+      }
+
+      previewTextarea.ondblclick = () => {
+        const v = previewTextarea.value;
+        const caret = previewTextarea.selectionStart ?? 0;
+
+        const lineStart = v.lastIndexOf("\n", caret - 1) + 1;
+        let lineEnd = v.indexOf("\n", caret);
+        if (lineEnd === -1) lineEnd = v.length;
+
+        previewTextarea.setSelectionRange(lineStart, lineEnd);
+      };
+
+      previewTextarea.onkeydown = (e) => {
+        if (e.key !== "Delete" && e.key !== "Backspace") return;
+
+        const selStart = previewTextarea.selectionStart ?? 0;
+        const selEnd = previewTextarea.selectionEnd ?? 0;
+        if (selStart === selEnd) return;
+
+        e.preventDefault();
+        ensureDeletedMaps(round);
+
+        const v = previewTextarea.value;
+
+        const startLine = v.slice(0, selStart).split("\n").length - 1;
+        const endLine = v.slice(0, selEnd).split("\n").length - 1;
+
+        const from = Math.min(startLine, endLine);
+        const to = Math.max(startLine, endLine);
+
+        for (let i = from; i <= to; i++) {
+          const token = visibleTokens[i];
+          if (!token) continue;
+
+          if (!draftData.deletedByLesson[round][token.lessonCode]) {
+            draftData.deletedByLesson[round][token.lessonCode] = new Set();
+          }
+          draftData.deletedByLesson[round][token.lessonCode].add(token.idx);
+        }
+
+        draftData.previewDirty[round] = true;
+        renderPreview();
+      };
+
+      renderPreview();
+
       LEVELS.forEach(level => {
         const levelBlock = document.createElement("div");
         levelBlock.className = "level-block";
@@ -474,15 +574,24 @@
               const arr = draftData.roundMap[round].selectedLessons;
               const set = new Set(arr);
 
-              if (cb.checked) set.add(code);
-              else set.delete(code);
+              ensureDeletedMaps(round);
+
+              if (cb.checked) {
+                // re-check should pull ALL words again for this lesson
+                set.add(code);
+                // clear deletion overlay for this lesson (fresh)
+                delete draftData.deletedByLesson[round][code];
+              } else {
+                // uncheck removes its remaining words AND resets its deletion history
+                set.delete(code);
+                delete draftData.deletedByLesson[round][code];
+              }
 
               draftData.roundMap[round].selectedLessons = Array.from(set).sort();
 
               draftData.previewDirty[round] = true;
-              const merged = generateRoundMergedString_lessonMerge(round);
-              previewTextarea.value = formatMarketplacePreview(merged);
-              draftData.savedMergedMap[round] = merged;
+
+              renderPreview();
 
               // Update highlight
               const hasGroup = groupCodes.some(code => set.has(code));
@@ -585,7 +694,7 @@
 
     rounds.forEach(round => {
       const selected = (draftData.roundMap[round]?.selectedLessons || []).join("|");
-      const merged = generateRoundMergedString_lessonMerge(round);
+      const merged = buildMergedStringFromTokens(round);
       rows.push(`${round},${selected},"${merged}"`);
     });
 
@@ -610,15 +719,15 @@
             fields,
             onSave: async (updatedGame) => {
               try {
-                const selectedCSV =
-                  game.layout === "lessonMerge"
-                    ? collectSelectedCSV_lessonMerge()
-                    : collectSelectedCSV();
-
                 const finalGame = {
                   ...game,
                   ...updatedGame
                 };
+                
+                const selectedCSV =
+                  finalGame.layout === "lessonMerge"
+                    ? collectSelectedCSV_lessonMerge()
+                    : collectSelectedCSV();
 
                 await saveMarketplaceToServer(finalGame, selectedCSV);
 
@@ -644,6 +753,8 @@
             // lessonMerge: selected.csv uses lesson codes like 1-01|3-02
             if (game.layout === "lessonMerge") {
               draftData.roundMap = {};
+              draftData.deletedByLesson = {};
+              draftData.savedMergedMap = {};
 
               selectedRows.forEach(r => {
                 const round = Number(r.round);
@@ -658,6 +769,7 @@
 
                 let raw = r.value || "";
                 if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
+
                 draftData.savedMergedMap[round] = raw;
               });
             } 
@@ -678,6 +790,10 @@
                     draftData.chapterMap[round][ch - 1] = true;
                   }
                 });
+
+                draftData.roundMap[round] = {
+                  selectedLessons: selected
+                };
 
                 let raw = r.value || "";
                 if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);

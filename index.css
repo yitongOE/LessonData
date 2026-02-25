@@ -491,3 +491,56 @@ body {
 }
 
 /*#endregion
+
+/*region ====== Word Bank ====== */
+
+.word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: white;
+}
+
+.word-chip {
+  user-select: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-light);
+  background: #f6f7fb;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.word-chip.selected {
+  border-color: var(--accent);
+  background: rgba(107, 92, 255, 0.12);
+  font-weight: 700;
+}
+
+.word-bank-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.word-delete-btn {
+  border: 1px solid var(--border-light);
+  background: white;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.word-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/*endregion */
