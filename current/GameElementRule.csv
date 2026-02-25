@@ -8,7 +8,7 @@ levels,Levels,false,false,false,false
 updatedAt,Last Updated,true,false,false,false
 updatedBy,Updated By,true,false,false,false
 timer,Timer (seconds),false,true,false,true
-lightning_timer,Lightning Timer (seconds),false,true,false,true
+lightning_timer,Timer (seconds),false,true,false,true
 max_wrong,Max Number of Wrong Actions,false,true,false,true
 block_highlight,Block Highlight,false,true,false,true
 words,Words,false,true,true,true

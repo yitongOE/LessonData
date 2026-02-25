@@ -65,7 +65,7 @@ body {
   transform: translateY(-50%);
 }
 
-#panel-toggle-btn {
+.panel-toggle-btn {
   padding: 6px 12px;
   font-size: 13px;
   border-radius: 6px;
@@ -74,7 +74,7 @@ body {
   cursor: pointer;
 }
 
-#panel-toggle-btn:hover {
+.panel-toggle-btn:hover {
   background: #f4f5f9;
 }
 
@@ -129,8 +129,7 @@ body {
   font-size: 14px;
 }
 
-.action-btn.edit,
-.action-btn.copy {
+.action-btn.edit {
   color: var(--accent);
 }
 
@@ -360,3 +359,188 @@ body {
 }
 
 /*#endregion */
+
+/*#region ====== Marketplace Content Editiong ====== */
+
+.round-section {
+  margin-bottom: 25px;
+}
+
+.round-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.round-header h4 {
+  margin: 0;
+}
+
+.round-toggle {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.round-content {
+  display: none;
+}
+
+.round-content.open {
+  display: block;
+}
+
+/* preview textarea */
+.round-preview {
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* ------ Chapter Merge ------ */
+
+.chapter-checkbox-row {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.chapter-checkbox-row label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ------ Lesson Merge ------ */
+
+.level-block {
+  padding: 5px;
+  margin-top: 5px;
+}
+
+.level-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.level-header.has-selection {
+  background: rgba(107, 92, 255, 0.14);
+  font-weight: 600;
+}
+
+.level-header.has-selection .level-title {
+  font-weight: 700;
+}
+
+.level-title {
+  font-weight: 600;
+}
+
+.level-content {
+  display: none;
+  margin-left: 10px;
+}
+
+.level-content.open {
+  display: block;
+}
+
+.lesson-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  margin-bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.lesson-group-header.has-selection {
+  background: rgba(107, 92, 255, 0.12);
+  font-weight: 600;
+}
+
+.lesson-group-row {
+  display: none;
+  margin-left: 24px;
+  margin-bottom: 10px;
+}
+
+.lesson-group-row.open {
+  display: block;
+}
+
+.lesson-group-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+}
+
+.level-header span,
+.lesson-group-header span {
+  width: 18px;
+  text-align: right;
+  flex: 0 0 18px;
+}
+
+/*#endregion
+
+/*region ====== Word Bank ====== */
+
+.word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: white;
+}
+
+.word-chip {
+  user-select: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-light);
+  background: #f6f7fb;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.word-chip.selected {
+  border-color: var(--accent);
+  background: rgba(107, 92, 255, 0.12);
+  font-weight: 700;
+}
+
+.word-bank-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.word-delete-btn {
+  border: 1px solid var(--border-light);
+  background: white;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.word-delete-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/*endregion */

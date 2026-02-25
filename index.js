@@ -59,28 +59,30 @@ let pendingAction = null;
 
 //#region ====== Login ======
 
+// Check if current user is logged in using Azure Function
 async function checkLogin() {
   try {
     const res = await fetch(
       `${FUNCTION_BASE}/api/getCurrentUser`,
-      { credentials: "include" }
+      { credentials: "include" } // Send cookies
     );
 
-    if (!res.ok) {
-      const redirect = encodeURIComponent(window.location.href);
+    if (!res.ok) { // res.ok means HTTP 200-209, if not means not logged in
+      const redirect = encodeURIComponent(window.location.href); // Make web jump back after log in
 
       window.location.href =
         `${FUNCTION_BASE}/.auth/login/aad?post_login_redirect_uri=${encodeURIComponent(
           FUNCTION_BASE + "/api/loginRedirect?target=" + redirect
-        )}`;
+        )}`; // log in portal of Azure Static Web App
     }
 
+    // Get user email and admin role
     const user = await res.json();
     window.currentUser = user;
-
     const role = await determineUserRole(user);
     window.currentRole = role;
 
+    // Ban unauthorized users
     if (!role) {
       alert("You are not authorized.");
       return;
@@ -89,6 +91,7 @@ async function checkLogin() {
     console.log("User:", user);
     console.log("Role:", role);
 
+    // Update UI according to admin level
     applyPermissions(role);
   } catch (err) {
     console.error("Login check failed:", err);
@@ -138,7 +141,7 @@ function applyPermissions(role) {
 
 //#endregion
 
-//#region ====== Panel Switch ======
+//#region ====== Panels ======
 
 // Detect current panel
 function getPanel() {
@@ -207,6 +210,73 @@ function setupIndexUI({ gamesCount = 0, adminsCount = 0, marketplaceCount = 0 })
   };
 
   return panel;
+}
+
+// Create panel
+function createPanelController({
+  panelName,
+  loadRules,
+  loadData,
+  drawRow,
+  bindRowUI,
+  onAfterDraw
+}) {
+  let items = [];
+  let footer = null;
+
+  function updateCount() {
+    const countEl = document.getElementById("item-count");
+    if (countEl) {
+      countEl.textContent = `(${items.length})`;
+    }
+  }
+
+  function draw() {
+    const tbody = document.getElementById("item-tbody");
+    tbody.innerHTML = "";
+
+    const [start, end] = footer.getPageSlice();
+    const pageItems = items.slice(start, end);
+
+    pageItems.forEach((item, index) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = drawRow(item, start + index);
+      bindRowUI(tr, item);
+      tbody.appendChild(tr);
+    });
+
+    updateCount();
+
+    if (window.currentRole) {
+      applyPermissions(window.currentRole);
+    }
+
+    if (onAfterDraw) {
+      onAfterDraw({ items, footer });
+    }
+  }
+
+  async function init(setupCountsObj) {
+    if (loadRules) await loadRules();
+
+    items = await loadData();
+
+    setupIndexUI(setupCountsObj);
+
+    footer = createFooterController({
+      onPageChange: draw
+    });
+
+    footer.setTotalItems(items.length);
+  }
+
+  async function reloadAndRedraw(loadFn) {
+    items = await (loadFn ? loadFn() : loadData());
+    footer.setTotalItems(items.length);
+    draw();
+  }
+
+  return { init, draw, reloadAndRedraw };
 }
 
 //#endregion
@@ -521,6 +591,13 @@ function formatMarketplacePreview(value) {
     .trim();
 }
 
+// Transfer boolean and number to correct formats
+window.parseValue = function(raw) {
+  if (raw === "true" || raw === "false") return raw === "true";
+  if (!isNaN(raw)) return Number(raw);
+  return raw;
+};
+
 //#endregion
 
 //#region ====== Replace CSV ====== 
@@ -576,7 +653,7 @@ async function saveGamesToServer(game) {
     ["updatedAt", game.updatedAt || "1/1/2000"],
     ["updatedBy", game.updatedBy || "testuser"],
     ["lightning_timer", game.lightning_timer || 90],
-    ["max_wrong", game.max_wrong || 3]
+    ["max_wrong", game.max_wrong || 3],
   ];
 
   const configCSV =
@@ -617,11 +694,12 @@ async function saveMarketplaceToServer(game, selectedCSV) {
     ["version", game.version],
     ["title", game.title],
     ["active", game.active ? "true" : "false"],
-    ["levels", game.levels],
+    ["rounds", game.rounds],
     ["updatedAt", game.updatedAt || "1/1/2000"],
     ["updatedBy", game.updatedBy || "testuser"],
     ["lightning_timer", game.lightning_timer || 90],
-    ["max_wrong", game.max_wrong || 3]
+    ["max_wrong", game.max_wrong || 3],
+    ["layout", game.layout]
   ];
 
   const configCSV =
