@@ -653,7 +653,7 @@ async function saveGamesToServer(game) {
     ["updatedAt", game.updatedAt || "1/1/2000"],
     ["updatedBy", game.updatedBy || "testuser"],
     ["lightning_timer", game.lightning_timer || 90],
-    ["max_wrong", game.max_wrong || 3]
+    ["max_wrong", game.max_wrong || 3],
   ];
 
   const configCSV =
@@ -698,7 +698,8 @@ async function saveMarketplaceToServer(game, selectedCSV) {
     ["updatedAt", game.updatedAt || "1/1/2000"],
     ["updatedBy", game.updatedBy || "testuser"],
     ["lightning_timer", game.lightning_timer || 90],
-    ["max_wrong", game.max_wrong || 3]
+    ["max_wrong", game.max_wrong || 3],
+    ["layout", game.layout]
   ];
 
   const configCSV =

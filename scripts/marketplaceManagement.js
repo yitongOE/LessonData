@@ -423,40 +423,63 @@
         levelBlock.style.padding = "10px";
         levelBlock.style.marginTop = "10px";
 
+        const levelHeader = document.createElement("div");
+        levelHeader.style.display = "flex";
+        levelHeader.style.justifyContent = "space-between";
+        levelHeader.style.alignItems = "center";
+        levelHeader.style.cursor = "pointer";
+        levelHeader.style.marginBottom = "8px";
+
         const levelTitle = document.createElement("div");
-        levelTitle.textContent = `Level ${level}`;
+        levelTitle.textContent = `Lv ${level}`;
         levelTitle.style.fontWeight = "600";
-        levelTitle.style.marginBottom = "8px";
-        levelBlock.appendChild(levelTitle);
+
+        const levelToggle = document.createElement("span");
+        levelToggle.textContent = "▸";
+
+        levelHeader.appendChild(levelTitle);
+        levelHeader.appendChild(levelToggle);
+        levelBlock.appendChild(levelHeader);
+
+        const levelContentWrapper = document.createElement("div");
+        levelContentWrapper.style.display = "none";
+
+        levelHeader.onclick = () => {
+          const isOpen = levelContentWrapper.style.display === "block";
+          levelContentWrapper.style.display = isOpen ? "none" : "block";
+          levelToggle.textContent = isOpen ? "▸" : "▾";
+        };
 
         for (let start = 1; start <= LESSONS_PER_LEVEL; start += GROUP_SIZE) {
           const end = start + GROUP_SIZE - 1;
 
-          // group row
-          const groupRow = document.createElement("div");
-          groupRow.style.display = "flex";
-          groupRow.style.alignItems = "center";
-          groupRow.style.gap = "10px";
-          groupRow.style.marginBottom = "6px";
+          const groupHeader = document.createElement("div");
+          groupHeader.style.display = "flex";
+          groupHeader.style.justifyContent = "space-between";
+          groupHeader.style.alignItems = "center";
+          groupHeader.style.cursor = "pointer";
+          groupHeader.style.marginBottom = "6px";
 
-          const groupLabel = document.createElement("div");
-          groupLabel.textContent = `Lesson ${start}-${end}`;
-          groupLabel.style.minWidth = "110px";
+          const groupTitle = document.createElement("div");
+          groupTitle.textContent = `L${start}-${end}`;
 
-          // group checkbox
-          const groupCb = document.createElement("input");
-          groupCb.type = "checkbox";
-          groupCb.disabled = readonlyMode;
+          const groupToggle = document.createElement("span");
+          groupToggle.textContent = "▸";
+
+          groupHeader.appendChild(groupTitle);
+          groupHeader.appendChild(groupToggle);
+
+          groupHeader.onclick = () => {
+            const isOpen = lessonRow.style.display === "block";
+            lessonRow.style.display = isOpen ? "none" : "block";
+            groupToggle.textContent = isOpen ? "▸" : "▾";
+          };
 
           // group checked if all 5 lessons are selected
           const groupCodes = [];
           for (let l = start; l <= end; l++) groupCodes.push(makeLessonCode(level, l));
 
           const selectedSet = new Set(draftData.roundMap[round].selectedLessons);
-          groupCb.checked = groupCodes.every(code => selectedSet.has(code));
-
-          groupRow.appendChild(groupCb);
-          groupRow.appendChild(groupLabel);
 
           // lesson checkbox row (hidden by default)
           const lessonRow = document.createElement("div");
@@ -492,52 +515,18 @@
               const merged = generateRoundMergedString_lessonMerge(round);
               previewTextarea.value = formatMarketplacePreview(merged);
               draftData.savedMergedMap[round] = merged;
-
-              // update group checkbox
-              const nowSet = new Set(draftData.roundMap[round].selectedLessons);
-              groupCb.checked = groupCodes.every(c => nowSet.has(c));
             };
 
             label.appendChild(cb);
-            label.appendChild(document.createTextNode(String(l)));
+            label.appendChild(document.createTextNode(`L${l}`));
             lessonRow.appendChild(label);
           }
 
-          // group checkbox toggles all 5 lessons + expands lessonRow
-          groupCb.onchange = () => {
-            const set = new Set(draftData.roundMap[round].selectedLessons);
-
-            groupCodes.forEach(code => {
-              if (groupCb.checked) set.add(code);
-              else set.delete(code);
-            });
-
-            draftData.roundMap[round].selectedLessons = Array.from(set).sort();
-
-            // update individual checkboxes
-            Array.from(lessonRow.querySelectorAll("input[type='checkbox']")).forEach((cb, idx) => {
-              cb.checked = groupCb.checked;
-            });
-
-            draftData.previewDirty[round] = true;
-            const merged = generateRoundMergedString_lessonMerge(round);
-            previewTextarea.value = formatMarketplacePreview(merged);
-            draftData.savedMergedMap[round] = merged;
-
-            // auto open to show the 5 lessons
-            lessonRow.style.display = "block";
-          };
-
-          // clicking the group label toggles open/close
-          groupLabel.style.cursor = "pointer";
-          groupLabel.onclick = () => {
-            lessonRow.style.display = lessonRow.style.display === "none" ? "block" : "none";
-          };
-
-          levelBlock.appendChild(groupRow);
-          levelBlock.appendChild(lessonRow);
+          levelContentWrapper.appendChild(groupHeader);
+          levelContentWrapper.appendChild(lessonRow);
         }
-
+        
+        levelBlock.appendChild(levelContentWrapper);
         contentWrapper.appendChild(levelBlock);
       });
 
@@ -617,12 +606,15 @@
     if (!draftData.roundMap) return "round,selected,value\n";
 
     const rows = [];
+    const rounds = Object.keys(draftData.roundMap)
+      .map(n => Number(n))
+      .sort((a, b) => a - b);
 
-    for (let round = 1; round <= draftData.rounds; round++) {
+    rounds.forEach(round => {
       const selected = (draftData.roundMap[round]?.selectedLessons || []).join("|");
       const merged = generateRoundMergedString_lessonMerge(round);
       rows.push(`${round},${selected},"${merged}"`);
-    }
+    });
 
     return "round,selected,value\n" + rows.join("\n");
   }
@@ -650,7 +642,12 @@
                     ? collectSelectedCSV_lessonMerge()
                     : collectSelectedCSV();
 
-                await saveMarketplaceToServer(updatedGame, selectedCSV);
+                const finalGame = {
+                  ...game,
+                  ...updatedGame
+                };
+
+                await saveMarketplaceToServer(finalGame, selectedCSV);
 
                 await marketplaceController.reloadAndRedraw(async () => {
                   mpgames = await loadMarketplaceFromCSV();
@@ -663,6 +660,8 @@
               }
             }
           });
+
+          draftData.rounds = game.rounds;
 
           let selectedRows = await loadMarketplaceSelectedCSV(game);
 
