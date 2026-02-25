@@ -2,7 +2,7 @@ key,value
 version,v1.0.0
 title,Bubble Pop
 active,true
-levels,6
+rounds,6
 updatedAt,1/1/2000
 updatedBy,testuser
 lightning_timer,90
