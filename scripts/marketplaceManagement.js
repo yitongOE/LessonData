@@ -410,10 +410,22 @@
         const levelContentWrapper = document.createElement("div");
         levelContentWrapper.className = "level-content";
 
+        // Highlight this level if any its lesson is selected
+        function updateLevelHighlight() {
+          const selected = draftData.roundMap[round]?.selectedLessons || [];
+
+          const hasSelection = selected.some(code => {
+            const parsed = parseLessonCode(code);
+            return parsed && parsed.level === level;
+          });
+
+          levelHeader.classList.toggle("has-selection", hasSelection);
+        }
+
         levelHeader.onclick = () => {
           levelContentWrapper.classList.toggle("open");
           const isOpen = levelContentWrapper.classList.contains("open");
-          levelToggle.textContent = isOpen ? "▸" : "▾";
+          levelToggle.textContent = isOpen ? "▾" : "▸";
         };
 
         for (let start = 1; start <= LESSONS_PER_LEVEL; start += GROUP_SIZE) {
@@ -432,14 +444,17 @@
           groupHeader.onclick = () => {
             lessonRow.classList.toggle("open");
             const isOpen = lessonRow.classList.contains("open");
-            groupToggle.textContent = isOpen ? "▸" : "▾";
+            groupToggle.textContent = isOpen ? "▾" : "▸";
           };
 
-          // group checked if all 5 lessons are selected
           const groupCodes = [];
           for (let l = start; l <= end; l++) groupCodes.push(makeLessonCode(level, l));
 
           const selectedSet = new Set(draftData.roundMap[round].selectedLessons);
+
+          // Highlight this chapter if any its lesson is selected
+          const hasGroupSelection = groupCodes.some(code => selectedSet.has(code));
+          groupHeader.classList.toggle("has-selection", hasGroupSelection);
 
           // lesson checkbox row (hidden by default)
           const lessonRow = document.createElement("div");
@@ -462,13 +477,17 @@
               if (cb.checked) set.add(code);
               else set.delete(code);
 
-              // keep it stable & readable
               draftData.roundMap[round].selectedLessons = Array.from(set).sort();
 
               draftData.previewDirty[round] = true;
               const merged = generateRoundMergedString_lessonMerge(round);
               previewTextarea.value = formatMarketplacePreview(merged);
               draftData.savedMergedMap[round] = merged;
+
+              // Update highlight
+              const hasGroup = groupCodes.some(code => set.has(code));
+              groupHeader.classList.toggle("has-selection", hasGroup);
+              updateLevelHighlight();
             };
 
             label.appendChild(cb);
@@ -482,6 +501,7 @@
         
         levelBlock.appendChild(levelContentWrapper);
         contentWrapper.appendChild(levelBlock);
+        updateLevelHighlight();
       });
 
       contentWrapper.appendChild(previewTextarea);

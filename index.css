@@ -415,10 +415,8 @@ body {
 /* ------ Lesson Merge ------ */
 
 .level-block {
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  padding: 10px;
-  margin-top: 10px;
+  padding: 5px;
+  margin-top: 5px;
 }
 
 .level-header {
@@ -427,6 +425,17 @@ body {
   align-items: center;
   cursor: pointer;
   margin-bottom: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.level-header.has-selection {
+  background: rgba(107, 92, 255, 0.14);
+  font-weight: 600;
+}
+
+.level-header.has-selection .level-title {
+  font-weight: 700;
 }
 
 .level-title {
@@ -435,6 +444,7 @@ body {
 
 .level-content {
   display: none;
+  margin-left: 10px;
 }
 
 .level-content.open {
@@ -447,6 +457,13 @@ body {
   align-items: center;
   cursor: pointer;
   margin-bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.lesson-group-header.has-selection {
+  background: rgba(107, 92, 255, 0.12);
+  font-weight: 600;
 }
 
 .lesson-group-row {
@@ -464,6 +481,13 @@ body {
   align-items: center;
   gap: 6px;
   margin-right: 12px;
+}
+
+.level-header span,
+.lesson-group-header span {
+  width: 18px;
+  text-align: right;
+  flex: 0 0 18px;
 }
 
 /*#endregion
