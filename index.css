@@ -261,7 +261,7 @@ body {
 }
 
 .modal-content {
-  max-width: 90%;
+  max-width: 100%;
   flex: 1;
   overflow-y: auto;
   padding-right: 8px;
@@ -470,10 +470,14 @@ body {
   display: none;
   margin-left: 24px;
   margin-bottom: 10px;
+
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;  
 }
 
 .lesson-group-row.open {
-  display: block;
+  display: flex;
 }
 
 .lesson-group-row label {
@@ -481,6 +485,8 @@ body {
   align-items: center;
   gap: 6px;
   margin-right: 12px;
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .level-header span,
@@ -490,57 +496,24 @@ body {
   flex: 0 0 18px;
 }
 
+.round-layout-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 12px;
+}
+
+.round-left-panel {
+  width: 70%;
+  min-width: 260px;
+}
+
+.round-right-panel {
+  flex: 1;
+}
+
+.round-right-panel textarea {
+  width: 100%;
+  height: 320px;
+}
+
 /*#endregion
-
-/*region ====== Word Bank ====== */
-
-.word-bank {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 10px;
-  border: 1px solid var(--border-light);
-  border-radius: 8px;
-  background: white;
-}
-
-.word-chip {
-  user-select: none;
-  cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border-light);
-  background: #f6f7fb;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.word-chip.selected {
-  border-color: var(--accent);
-  background: rgba(107, 92, 255, 0.12);
-  font-weight: 700;
-}
-
-.word-bank-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-}
-
-.word-delete-btn {
-  border: 1px solid var(--border-light);
-  background: white;
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-.word-delete-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-/*endregion */
