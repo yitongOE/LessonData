@@ -280,6 +280,7 @@
       previewTextarea.className = "round-preview";
       previewTextarea.rows = 4;
       previewTextarea.readOnly = true;
+      previewTextarea.tabIndex = 0;
 
       const hasSavedValue =
         draftData.savedMergedMap[i] !== undefined &&
@@ -392,7 +393,8 @@
       const previewTextarea = document.createElement("textarea");
       previewTextarea.rows = 4;
       previewTextarea.className = "round-preview";
-      previewTextarea.readOnly = true;
+      //previewTextarea.readOnly = true;
+      previewTextarea.spellcheck = false;
 
       function renderPreview() {
         const raw = draftData.roundMergedValue?.[round] || "";
@@ -400,7 +402,8 @@
         previewTextarea.value = lines.join("\n");
       }
 
-      previewTextarea.ondblclick = () => {
+      // 1. Double-click selection logic
+      previewTextarea.ondblclick = (e) => {
         const v = previewTextarea.value;
         const caret = previewTextarea.selectionStart ?? 0;
 
@@ -408,31 +411,54 @@
         let lineEnd = v.indexOf("\n", caret);
         if (lineEnd === -1) lineEnd = v.length;
 
+        // Focus must be called before setSelectionRange for cross-browser consistency
+        previewTextarea.focus(); 
         previewTextarea.setSelectionRange(lineStart, lineEnd);
       };
 
+      // 2. Keyboard deletion logic
       previewTextarea.onkeydown = (e) => {
-        if (e.key !== "Delete" && e.key !== "Backspace") return;
+        // Debugging: Output should now be visible in Edge
+        console.log("Key pressed:", e.key);
 
         const selStart = previewTextarea.selectionStart ?? 0;
         const selEnd = previewTextarea.selectionEnd ?? 0;
-        if (selStart === selEnd) return;
+        const hasSelection = selStart !== selEnd;
 
+        // Allow modifier keys (e.g., Ctrl+C, Ctrl+A)
+        if (e.ctrlKey || e.metaKey) return;
+
+        // Handle deletion logic
+        if (e.key === "Delete" || e.key === "Backspace") {
+            if (hasSelection) {
+                e.preventDefault();
+
+                const full = previewTextarea.value;
+                const lines = full.split("\n");
+
+                const startLine = full.slice(0, selStart).split("\n").length - 1;
+                const endLine = full.slice(0, selEnd).split("\n").length - 1;
+
+                const from = Math.min(startLine, endLine);
+                const to = Math.max(startLine, endLine);
+
+                lines.splice(from, to - from + 1);
+
+                // Update data source and redraw
+                if (!draftData.roundMergedValue) draftData.roundMergedValue = {};
+                draftData.roundMergedValue[round] = lines.length ? lines.map(w => `${w};`).join(" ") : "";
+                
+                renderPreview();
+            } else {
+                // Prevent default deletion if no selection exists to avoid accidental character removal
+                e.preventDefault();
+            }
+            return;
+        }
+
+        // Block all other inputs (characters, space, enter, etc.)
+        // This simulates a "read-only" state while keeping the element interactive
         e.preventDefault();
-
-        const full = previewTextarea.value;
-        const lines = full.split("\n");
-
-        const startLine = full.slice(0, selStart).split("\n").length - 1;
-        const endLine = full.slice(0, selEnd).split("\n").length - 1;
-
-        const from = Math.min(startLine, endLine);
-        const to = Math.max(startLine, endLine);
-
-        lines.splice(from, to - from + 1);
-
-        draftData.roundMergedValue[round] = lines.length ? lines.map(w => `${w};`).join(" ") : "";
-        renderPreview();
       };
 
       renderPreview();
