@@ -12,3 +12,4 @@ max_wrong,Max Number of Wrong Actions,false,true,false,true
 block_highlight,Block Highlight,false,true,false,true
 words,Words,false,true,true,true
 sentences,Sentences,false,true,true,true
+layout,,false,false,false,false
