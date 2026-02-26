@@ -249,23 +249,32 @@ body {
 
 .modal-card {
   position: relative;
-  width: 1000px;
   margin: 5vh auto;
   background: white;
   border-radius: 8px;
-  padding: 28px 24px 24px;
-
-  max-height: 85vh;
+  padding: 28px 32px 24px;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
 }
 
+.modal-card.action {
+  max-width: 520px;
+  width: 90%;
+}
+
+.modal-card.edit {
+  width: 95%;
+  max-width: 1200px;
+}
+
 .modal-content {
+  width: 100%;
   max-width: 100%;
   flex: 1;
   overflow-y: auto;
-  padding-right: 8px;
-  margin: 0 auto;
+  padding: 20px;
+  margin: 0;
 }
 
 .readonly-field {
@@ -503,7 +512,7 @@ body {
 }
 
 .round-left-panel {
-  width: 70%;
+  width: 50%;
   min-width: 260px;
 }
 
