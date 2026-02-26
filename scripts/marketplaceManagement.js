@@ -396,7 +396,8 @@
 
       function renderPreview() {
         const raw = draftData.roundMergedValue?.[round] || "";
-        previewTextarea.value = raw ? raw.split("|").join("\n") : "";
+        const lines = raw.split(";").map(s => s.trim()).filter(Boolean);
+        previewTextarea.value = lines.join("\n");
       }
 
       previewTextarea.ondblclick = () => {
@@ -430,11 +431,21 @@
 
         lines.splice(from, to - from + 1);
 
-        draftData.roundMergedValue[round] = lines.join("|");
+        draftData.roundMergedValue[round] = lines.length ? lines.map(w => `${w};`).join(" ") : "";
         renderPreview();
       };
 
       renderPreview();
+      
+      // Two columns
+      const layoutRow = document.createElement("div");
+      layoutRow.className = "round-layout-row";
+
+      const leftPanel = document.createElement("div");
+      leftPanel.className = "round-left-panel";
+
+      const rightPanel = document.createElement("div");
+      rightPanel.className = "round-right-panel";
 
       LEVELS.forEach(level => {
         const levelBlock = document.createElement("div");
@@ -520,19 +531,32 @@
 
               if (cb.checked) {
                 set.add(code);
-
                 const parsed = parseLessonCode(code);
                 const words = parsed ? getLessonWords(parsed.level, parsed.lesson) : [];
-
-                const cur = draftData.roundMergedValue[round]
-                  ? draftData.roundMergedValue[round].split("|").filter(Boolean)
-                  : [];
-
-                draftData.roundMergedValue[round] = cur.concat(words).join("|");
+                const cur = draftData.roundMergedValue[round] ? draftData.roundMergedValue[round].split(";").map(s => s.trim()).filter(Boolean)  : [];
+                const merged = cur.concat(words);
+                draftData.roundMergedValue[round] = merged.length ? merged.map(w => `${w};`).join(" ")  : "";
               } else {
                 set.delete(code);
 
-                draftData.roundMergedValue[round] = generateRoundMergedString_lessonMerge(round);
+                const parsed = parseLessonCode(code);
+                const removeWords = parsed
+                  ? getLessonWords(parsed.level, parsed.lesson)
+                  : [];
+
+                const cur = draftData.roundMergedValue[round]
+                  ? draftData.roundMergedValue[round]
+                      .split(";")
+                      .map(s => s.trim())
+                      .filter(Boolean)
+                  : [];
+
+                const filtered = cur.filter(w => !removeWords.includes(w));
+
+                draftData.roundMergedValue[round] =
+                  filtered.length
+                    ? filtered.map(w => `${w};`).join(" ")
+                    : "";
               }
 
               draftData.roundMap[round].selectedLessons =
@@ -555,11 +579,14 @@
         }
         
         levelBlock.appendChild(levelContentWrapper);
-        contentWrapper.appendChild(levelBlock);
+        leftPanel.appendChild(levelBlock);
         updateLevelHighlight();
       });
 
-      contentWrapper.appendChild(previewTextarea);
+      rightPanel.appendChild(previewTextarea);
+      layoutRow.appendChild(leftPanel);
+      layoutRow.appendChild(rightPanel);
+      contentWrapper.appendChild(layoutRow);
       section.appendChild(contentWrapper);
 
       header.onclick = () => {
@@ -589,7 +616,9 @@
       }
     });
 
-    return merged.join("|");
+    return merged.length
+      ? merged.flatMap(chunk => chunk.split(/[|;\n,，；]+/g).map(s => s.trim()).filter(Boolean)).map(w => `${w};`).join(" ")
+      : "";
   }
 
   // Combine all word strings to output - Lesson Merge Layout
@@ -604,11 +633,14 @@
       if (!parsed) return;
 
       const { level, lesson } = parsed;
-      const content = draftData.lessonContentMap[level]?.[lesson];
-      if (content) merged.push(content);
+      const words = getLessonWords(level, lesson);
+
+      if (words.length) merged.push(...words);
     });
 
-    return merged.join("|");
+    return merged.length
+      ? merged.map(w => `${w};`).join(" ")
+      : "";
   }
 
   function collectSelectedCSV() {
@@ -715,7 +747,15 @@
 
                 let raw = r.value || "";
                 if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
-                draftData.roundMergedValue[round] = raw;
+
+                const cleaned = raw
+                  .split(/[|;\n,，；]+/)
+                  .map(s => s.trim())
+                  .filter(Boolean)
+                  .map(w => `${w};`)
+                  .join(" ");
+
+                draftData.roundMergedValue[round] = cleaned;
               });
             } 
             // chapterMerge: keep old behavior
