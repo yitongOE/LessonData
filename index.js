@@ -478,8 +478,14 @@ function openEditModal({ title, data, fields, onSave, readonlyMode = false }) {
           if (field.key === "levels" && typeof syncMarketplaceContentWithLevels === "function") {
             syncMarketplaceContentWithLevels(v);
           }
-          if (field.key === "rounds" && typeof syncMarketplaceContentWithRounds === "function") {
-            syncMarketplaceContentWithRounds(v);
+          if (field.key === "rounds") {
+            if (editingTarget?.layout?.startsWith("lessonMerge") &&
+                typeof syncMarketplaceContentWithRounds_lessonMerge === "function") {
+              syncMarketplaceContentWithRounds_lessonMerge(v);
+            }
+            else if (typeof syncMarketplaceContentWithRounds === "function") {
+              syncMarketplaceContentWithRounds(v);
+            }
           }
         }
       };
