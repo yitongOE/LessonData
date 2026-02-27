@@ -353,6 +353,9 @@
   };
 
   window.syncMarketplaceContentWithRounds_lessonMerge = function(roundCount, readonlyMode = false) {
+    // if preview box is freely editable
+    const isFreeEdit = editingTarget?.layout === "lessonMergeFree";
+    
     const container = document.getElementById("edit-content");
     if (!container) return;
     if (!draftData.roundMap) draftData.roundMap = {};
@@ -402,7 +405,7 @@
         previewTextarea.value = lines.join("\n");
       }
 
-      // 1. Double-click selection logic
+      // Double-click selection logic
       previewTextarea.ondblclick = (e) => {
         const v = previewTextarea.value;
         const caret = previewTextarea.selectionStart ?? 0;
@@ -416,50 +419,64 @@
         previewTextarea.setSelectionRange(lineStart, lineEnd);
       };
 
-      // 2. Keyboard deletion logic
-      previewTextarea.onkeydown = (e) => {
-        // Debugging: Output should now be visible in Edge
-        console.log("Key pressed:", e.key);
+      // Keyboard deletion logic
+      if (!isFreeEdit) {
+        previewTextarea.onkeydown = (e) => {
+          // Debugging: Output should now be visible in Edge
+          //console.log("Key pressed:", e.key);
 
-        const selStart = previewTextarea.selectionStart ?? 0;
-        const selEnd = previewTextarea.selectionEnd ?? 0;
-        const hasSelection = selStart !== selEnd;
+          const selStart = previewTextarea.selectionStart ?? 0;
+          const selEnd = previewTextarea.selectionEnd ?? 0;
+          const hasSelection = selStart !== selEnd;
 
-        // Allow modifier keys (e.g., Ctrl+C, Ctrl+A)
-        if (e.ctrlKey || e.metaKey) return;
+          // Allow modifier keys (e.g., Ctrl+C, Ctrl+A)
+          if (e.ctrlKey || e.metaKey) return;
 
-        // Handle deletion logic
-        if (e.key === "Delete" || e.key === "Backspace") {
-            if (hasSelection) {
-                e.preventDefault();
+          // Handle deletion logic
+          if (e.key === "Delete" || e.key === "Backspace") {
+              if (hasSelection) {
+                  e.preventDefault();
 
-                const full = previewTextarea.value;
-                const lines = full.split("\n");
+                  const full = previewTextarea.value;
+                  const lines = full.split("\n");
 
-                const startLine = full.slice(0, selStart).split("\n").length - 1;
-                const endLine = full.slice(0, selEnd).split("\n").length - 1;
+                  const startLine = full.slice(0, selStart).split("\n").length - 1;
+                  const endLine = full.slice(0, selEnd).split("\n").length - 1;
 
-                const from = Math.min(startLine, endLine);
-                const to = Math.max(startLine, endLine);
+                  const from = Math.min(startLine, endLine);
+                  const to = Math.max(startLine, endLine);
 
-                lines.splice(from, to - from + 1);
+                  lines.splice(from, to - from + 1);
 
-                // Update data source and redraw
-                if (!draftData.roundMergedValue) draftData.roundMergedValue = {};
-                draftData.roundMergedValue[round] = lines.length ? lines.map(w => `${w};`).join(" ") : "";
-                
-                renderPreview();
-            } else {
-                // Prevent default deletion if no selection exists to avoid accidental character removal
-                e.preventDefault();
-            }
-            return;
-        }
+                  // Update data source and redraw
+                  if (!draftData.roundMergedValue) draftData.roundMergedValue = {};
+                  draftData.roundMergedValue[round] = lines.length ? lines.map(w => `${w};`).join(" ") : "";
+                  
+                  renderPreview();
+              } else {
+                  // Prevent default deletion if no selection exists to avoid accidental character removal
+                  e.preventDefault();
+              }
+              return;
+          }
 
-        // Block all other inputs (characters, space, enter, etc.)
-        // This simulates a "read-only" state while keeping the element interactive
-        e.preventDefault();
-      };
+          // Block all other inputs (characters, space, enter, etc.)
+          // This simulates a "read-only" state while keeping the element interactive
+          e.preventDefault();
+        };
+      } else {
+        previewTextarea.oninput = () => {
+          const lines = previewTextarea.value
+            .split("\n")
+            .map(s => s.trim())
+            .filter(Boolean);
+
+          draftData.roundMergedValue[round] =
+            lines.length
+              ? lines.map(w => `${w};`).join(" ")
+              : "";
+        };
+      }
 
       renderPreview();
       
@@ -730,7 +747,7 @@
                 };
                 
                 const selectedCSV =
-                  finalGame.layout === "lessonMerge"
+                  finalGame.layout?.startsWith("lessonMerge")
                     ? collectSelectedCSV_lessonMerge()
                     : collectSelectedCSV();
 
@@ -756,18 +773,14 @@
             draftData.savedMergedMap = {};
 
             // lessonMerge: selected.csv uses lesson codes like 1-01|3-02
-            if (game.layout === "lessonMerge") {
+            if (game.layout?.startsWith("lessonMerge")) {
               draftData.roundMap = {};
               ensureRoundMergedValue();
               draftData.roundMergedValue = {};
 
               selectedRows.forEach(r => {
                 const round = Number(r.round);
-
-                const selected = (r.selected || "")
-                  .split("|")
-                  .map(s => s.trim())
-                  .filter(Boolean);
+                const selected = (r.selected || "").split("|").map(s => s.trim()).filter(Boolean);
 
                 draftData.roundMap[round] = { selectedLessons: selected };
 
@@ -802,10 +815,6 @@
                   }
                 });
 
-                draftData.roundMap[round] = {
-                  selectedLessons: selected
-                };
-
                 let raw = r.value || "";
                 if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
                 draftData.savedMergedMap[round] = raw;
@@ -817,7 +826,7 @@
 
           if (contentRows) {
             // lessonMerge: content.csv headers are level,lesson,value
-            if (game.layout === "lessonMerge") {
+            if (game.layout?.startsWith("lessonMerge")) {
               draftData.lessonContentMap = {};
 
               contentRows.forEach(r => {
@@ -840,7 +849,7 @@
             }
           }
 
-          if (game.layout === "lessonMerge") {
+          if (game.layout?.startsWith("lessonMerge")) {
             syncMarketplaceContentWithRounds_lessonMerge(draftData.rounds);
           } else {
             syncMarketplaceContentWithRounds(draftData.rounds);
@@ -915,7 +924,7 @@
 
       renderEditorContent(contents, contentKeys, true);
       
-      if (game.layout === "lessonMerge") {
+      if (game.layout?.startsWith("lessonMerge")) {
         syncMarketplaceContentWithRounds_lessonMerge(game.rounds, true);
       } else {
         syncMarketplaceContentWithRounds(game.rounds, true);
