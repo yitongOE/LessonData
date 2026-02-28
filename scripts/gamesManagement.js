@@ -467,7 +467,7 @@
 
       openEditModal({
         title: `View ${game.title}`,
-        data: game,
+        data: { ...game, content: contents["content"] },
         fields,
         readonlyMode: true
       });

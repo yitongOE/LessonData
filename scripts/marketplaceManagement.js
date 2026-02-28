@@ -358,7 +358,7 @@
   // Generates lessonMerge layout UI with level and lesson grouping
   window.syncMarketplaceContentWithRounds_lessonMerge = function(roundCount, readonlyMode = false) {
     // if preview box is freely editable
-    const isFreeEdit = editingTarget?.layout === "lessonMergeFree";
+    const isFreeEdit = !readonlyMode && editingTarget?.layout === "lessonMergeFree";
     
     const container = document.getElementById("edit-content");
     if (!container) return;
@@ -423,61 +423,71 @@
       };
 
       // Keyboard deletion logic
-      if (!isFreeEdit) {
-        previewTextarea.onkeydown = (e) => {
-          // Debugging: Output should now be visible in Edge
-          //console.log("Key pressed:", e.key);
+      if (readonlyMode) {
+        // View mode: fully read-only (no deletion, no typing)
+        previewTextarea.readOnly = true;
 
+        // Block all non-modifier keys to prevent deleting selected text
+        previewTextarea.onkeydown = (e) => {
+          // Allow copy/select-all shortcuts
+          if (e.ctrlKey || e.metaKey) return;
+          e.preventDefault();
+        };
+
+        // Extra safety: ignore any input event (some browsers can still trigger it)
+        previewTextarea.oninput = null;
+
+      } else if (!isFreeEdit) {
+        // Edit mode (auto): allow only deleting whole selected lines, block other typing
+        previewTextarea.onkeydown = (e) => {
           const selStart = previewTextarea.selectionStart ?? 0;
           const selEnd = previewTextarea.selectionEnd ?? 0;
           const hasSelection = selStart !== selEnd;
 
-          // Allow modifier keys (e.g., Ctrl+C, Ctrl+A)
+          // Allow modifier keys (Ctrl+C, Ctrl+A, etc.)
           if (e.ctrlKey || e.metaKey) return;
 
-          // Handle deletion logic
           if (e.key === "Delete" || e.key === "Backspace") {
-              if (hasSelection) {
-                  e.preventDefault();
+            if (hasSelection) {
+              e.preventDefault();
 
-                  const full = previewTextarea.value;
-                  const lines = full.split("\n");
+              const full = previewTextarea.value;
+              const lines = full.split("\n");
 
-                  const startLine = full.slice(0, selStart).split("\n").length - 1;
-                  const endLine = full.slice(0, selEnd).split("\n").length - 1;
+              const startLine = full.slice(0, selStart).split("\n").length - 1;
+              const endLine = full.slice(0, selEnd).split("\n").length - 1;
 
-                  const from = Math.min(startLine, endLine);
-                  const to = Math.max(startLine, endLine);
+              const from = Math.min(startLine, endLine);
+              const to = Math.max(startLine, endLine);
 
-                  lines.splice(from, to - from + 1);
+              lines.splice(from, to - from + 1);
 
-                  // Update data source and redraw
-                  if (!draftData.roundMergedValue) draftData.roundMergedValue = {};
-                  draftData.roundMergedValue[round] = lines.length ? lines.map(w => `${w};`).join(" ") : "";
-                  
-                  renderPreview();
-              } else {
-                  // Prevent default deletion if no selection exists to avoid accidental character removal
-                  e.preventDefault();
-              }
-              return;
+              if (!draftData.roundMergedValue) draftData.roundMergedValue = {};
+              draftData.roundMergedValue[round] = lines.length
+                ? lines.map(w => `${w};`).join(" ")
+                : "";
+
+              renderPreview();
+            } else {
+              e.preventDefault();
+            }
+            return;
           }
 
-          // Block all other inputs (characters, space, enter, etc.)
-          // This simulates a "read-only" state while keeping the element interactive
+          // Block all other typing
           e.preventDefault();
         };
       } else {
+        // Edit mode (free): fully editable, update draft on input
         previewTextarea.oninput = () => {
           const lines = previewTextarea.value
             .split("\n")
             .map(s => s.trim())
             .filter(Boolean);
 
-          draftData.roundMergedValue[round] =
-            lines.length
-              ? lines.map(w => `${w};`).join(" ")
-              : "";
+          draftData.roundMergedValue[round] = lines.length
+            ? lines.map(w => `${w};`).join(" ")
+            : "";
         };
       }
 
@@ -706,6 +716,84 @@
     return "round,selected,value\n" + rows.join("\n");
   }
 
+  async function prepareMarketplaceDraftData(game) {
+    draftData.rounds = game.rounds;
+
+    // Load selected.csv
+    let selectedRows = await loadMarketplaceSelectedCSV(game);
+
+    if (selectedRows) {
+      draftData.savedMergedMap = {};
+
+      if (game.layout?.startsWith("lessonMerge")) {
+        draftData.roundMap = {};
+        draftData.roundMergedValue = {};
+
+        selectedRows.forEach(r => {
+          const round = Number(r.round);
+          const selected = (r.selected || "")
+            .split("|")
+            .map(s => s.trim())
+            .filter(Boolean);
+
+          draftData.roundMap[round] = { selectedLessons: selected };
+
+          let raw = r.value || "";
+          if (raw.startsWith('"') && raw.endsWith('"')) {
+            raw = raw.slice(1, -1);
+          }
+
+          draftData.roundMergedValue[round] = raw;
+        });
+      } else {
+        draftData.chapterMap = {};
+
+        selectedRows.forEach(r => {
+          const round = Number(r.round);
+          const selectedArr = (r.selected || "")
+            .split("|")
+            .map(n => Number(n));
+
+          draftData.chapterMap[round] = [false, false, false, false, false, false];
+
+          selectedArr.forEach(ch => {
+            if (ch >= 1 && ch <= 6) {
+              draftData.chapterMap[round][ch - 1] = true;
+            }
+          });
+
+          draftData.savedMergedMap[round] = r.value || "";
+        });
+      }
+    }
+
+    // Load content.csv
+    let contentRows = await loadMarketplaceContentCSV(game);
+
+    if (contentRows) {
+      if (game.layout?.startsWith("lessonMerge")) {
+        draftData.lessonContentMap = {};
+
+        contentRows.forEach(r => {
+          const level = Number(r.level);
+          const lesson = Number(r.lesson);
+
+          if (!draftData.lessonContentMap[level]) {
+            draftData.lessonContentMap[level] = {};
+          }
+
+          draftData.lessonContentMap[level][lesson] = r.value || "";
+        });
+      } else {
+        draftData.contentMap = {};
+
+        contentRows.forEach(r => {
+          draftData.contentMap[Number(r.chapter)] = r.value || "";
+        });
+      }
+    }
+  }
+
   // Bind actions with interactctive UI components
   function bindMarketplaceInteractiveUI(row, game) {
     // "Edit" Button
@@ -714,10 +802,12 @@
         title: "Modify Game",
         desc: "You are about to modify this game. This change will take effect immediately.",
         onConfirm: async () => {
+
           const fields = await getEditorFieldsFromRules(game);
           const contentKeys = [];
           currentContentKeys = contentKeys;
 
+          // Open modal first
           openEditModal({
             title: `Edit ${game.title}`,
             data: game,
@@ -728,7 +818,7 @@
                   ...game,
                   ...updatedGame
                 };
-                
+
                 const selectedCSV =
                   finalGame.layout?.startsWith("lessonMerge")
                     ? collectSelectedCSV_lessonMerge()
@@ -742,96 +832,17 @@
                 });
 
                 showFooterMessage("✓ Saved to CSV");
+
               } catch (e) {
                 alert("Save failed. Check server.");
               }
             }
           });
 
-          draftData.rounds = game.rounds;
+          // Unified initialization (replaces 150 lines of duplicated logic)
+          await prepareMarketplaceDraftData(game);
 
-          let selectedRows = await loadMarketplaceSelectedCSV(game);
-
-          if (selectedRows) {
-            draftData.savedMergedMap = {};
-
-            // lessonMerge: selected.csv uses lesson codes like 1-01|3-02
-            if (game.layout?.startsWith("lessonMerge")) {
-              draftData.roundMap = {};
-              ensureRoundMergedValue();
-              draftData.roundMergedValue = {};
-
-              selectedRows.forEach(r => {
-                const round = Number(r.round);
-                const selected = (r.selected || "").split("|").map(s => s.trim()).filter(Boolean);
-
-                draftData.roundMap[round] = { selectedLessons: selected };
-
-                let raw = r.value || "";
-                if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
-
-                const cleaned = raw
-                  .split(/[|;\n,，；]+/)
-                  .map(s => s.trim())
-                  .filter(Boolean)
-                  .map(w => `${w};`)
-                  .join(" ");
-
-                draftData.roundMergedValue[round] = cleaned;
-              });
-            } 
-            // chapterMerge: keep old behavior
-            else {
-              draftData.chapterMap = {};
-
-              selectedRows.forEach(r => {
-                const round = Number(r.round);
-                const selectedArr = (r.selected || "")
-                  .split("|")
-                  .map(n => Number(n));
-
-                draftData.chapterMap[round] = [false, false, false, false, false, false];
-
-                selectedArr.forEach(ch => {
-                  if (ch >= 1 && ch <= 6) {
-                    draftData.chapterMap[round][ch - 1] = true;
-                  }
-                });
-
-                let raw = r.value || "";
-                if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
-                draftData.savedMergedMap[round] = raw;
-              });
-            }
-          }
-
-          let contentRows = await loadMarketplaceContentCSV(game);
-
-          if (contentRows) {
-            // lessonMerge: content.csv headers are level,lesson,value
-            if (game.layout?.startsWith("lessonMerge")) {
-              draftData.lessonContentMap = {};
-
-              contentRows.forEach(r => {
-                const level = Number(r.level);
-                const lesson = Number(r.lesson);
-                if (!level || !lesson) return;
-
-                if (!draftData.lessonContentMap[level]) draftData.lessonContentMap[level] = {};
-                draftData.lessonContentMap[level][lesson] = r.value || "";
-              });
-            } 
-            // chapterMerge: keep old behavior (content.csv headers are chapter,value)
-            else {
-              draftData.contentMap = {};
-
-              contentRows.forEach(r => {
-                const chapter = Number(r.chapter);
-                draftData.contentMap[chapter] = r.value || "";
-              });
-            }
-          }
-
+          // Render layout after draftData is ready
           if (game.layout?.startsWith("lessonMerge")) {
             syncMarketplaceContentWithRounds_lessonMerge(draftData.rounds);
           } else {
@@ -875,29 +886,8 @@
     // };
 
     // "View" Button
-    row.querySelector(".view").onclick = async() => {
+    row.querySelector(".view").onclick = async () => {
       const fields = await getEditorFieldsFromRules(game);
-
-      const contentKeys = [];
-      currentContentKeys = contentKeys;
-
-      if (await hasMarketplaceContentCSV(game)) {
-        let label = "Content";
-
-        if (game.key.toLowerCase().includes("sentence")) label = "Sentences";
-        else label = "Words";
-
-        contentKeys.push({ key: "content", label });
-      }
-
-      const contents = {};
-
-      if (contentKeys.length > 0) {
-        const rows = await loadMarketplaceContentCSV(game);
-        if (rows) {
-          contents["content"] = rows;
-        }
-      }
 
       openEditModal({
         title: `View ${game.title}`,
@@ -906,12 +896,12 @@
         readonlyMode: true
       });
 
-      renderEditorContent(contents, contentKeys, true);
-      
+      await prepareMarketplaceDraftData(game);
+
       if (game.layout?.startsWith("lessonMerge")) {
-        syncMarketplaceContentWithRounds_lessonMerge(game.rounds, true);
+        syncMarketplaceContentWithRounds_lessonMerge(draftData.rounds, true);
       } else {
-        syncMarketplaceContentWithRounds(game.rounds, true);
+        syncMarketplaceContentWithRounds(draftData.rounds, true);
       }
     };
 
