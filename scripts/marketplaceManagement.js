@@ -2,36 +2,34 @@
   //#region ====== Variables ======
 
   let mpgames = [];
-  let panelKeys = [];
   let panelKeySet = new Set();
-  let currentContentKeys = [];
   let marketplaceController = null;
 
   //#endregion
 
   //#region ====== CSV ======
 
+  // Loads MarketplaceElementRule.csv and extracts keys used in panel display
   async function loadMarketplaceElementRules() {
     const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/MarketplaceElementRule.csv?t=" + Date.now());
 
-    panelKeys = [];
     panelKeySet.clear();
 
     rows.forEach(r => {
       if (r.inPanel === "true") {
-        panelKeys.push(r.key);
         panelKeySet.add(r.key);
       }
     });
   }
 
+  // Reads marketplace table header configuration from DOM and returns ordered keys
   function getPanelHeaderKeys() {
-  const ths = document
-    .querySelectorAll("#thead-marketplace th[data-key]");
+    const ths = document.querySelectorAll("#thead-marketplace th[data-key]");
 
     return Array.from(ths).map(th => th.dataset.key);
   }
 
+  // Loads all marketplace config.csv files and converts them into structured game objects
   async function loadMarketplaceFromCSV() {
     const gameDirs = [
       "WordSplash",
@@ -58,6 +56,7 @@
     return games;
   }
 
+  // Checks whether marketplace content.csv exists for the given game
   async function hasMarketplaceContentCSV(game) {
     const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/content.csv`;
     try {
@@ -68,6 +67,7 @@
     }
   }
 
+  // Loads marketplace content.csv for the given game
   async function loadMarketplaceContentCSV(game) {
     const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/content.csv?t=${Date.now()}`;
 
@@ -78,6 +78,7 @@
     }
   }
 
+  // Loads selected.csv which stores round-level selection data
   async function loadMarketplaceSelectedCSV(game) {
     const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/marketplace/${game.key}/selected.csv?t=${Date.now()}`;
 
@@ -92,14 +93,17 @@
 
   //#region ====== LessonMerge Layout ======
 
+  // Pads a number to two digits with leading zero
   function pad2(n) {
     return String(n).padStart(2, "0");
   }
 
+  // Generates lesson code in format "level-lesson" (e.g., 1-01)
   function makeLessonCode(level, lesson) {
     return `${level}-${pad2(lesson)}`; // e.g. 1-01, 3-12
   }
 
+  // Parses lesson code string into level and lesson numbers
   function parseLessonCode(code) {
     const [lv, ls] = (code || "").split("-");
     const level = Number(lv);
@@ -108,16 +112,15 @@
     return { level, lesson };
   }
 
+  // Retrieves and splits stored lesson content into individual words
   function getLessonWords(level, lesson) {
     const raw = (draftData.lessonContentMap?.[level]?.[lesson] || "").trim();
     if (!raw) return [];
 
-    return raw
-      .split(/[|;\n,，；]+/g)
-      .map(s => s.trim())
-      .filter(Boolean);
+    return raw.split(/[|;\n,，；]+/g).map(s => s.trim()).filter(Boolean);
   }
 
+  // Ensures roundMergedValue structure exists in draftData
   function ensureRoundMergedValue() {
     if (!draftData.roundMergedValue) draftData.roundMergedValue = {};
   }
@@ -170,6 +173,7 @@
     return html;
   }
 
+  // Generates editor field schema based on MarketplaceElementRule.csv
   async function getEditorFieldsFromRules(game) {
     const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/MarketplaceElementRule.csv?t=" + Date.now());
 
@@ -193,6 +197,7 @@
     });
   }
 
+  // Renders simple round-based content editor UI
   function renderEditorContent(contents, contentKeys, readonlyMode = false) {
     const container = document.getElementById("edit-content");
     if (!container) return;
@@ -217,10 +222,8 @@
 
       rows.forEach(r => {
         const round = Number(r.round);
-
         const rowDiv = document.createElement("div");
         rowDiv.className = "content-row";
-
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
         textarea.dataset.round = r.round;
@@ -234,7 +237,6 @@
 
         rowDiv.appendChild(document.createElement("div")).textContent = `Round ${round}`;
         rowDiv.appendChild(textarea);
-
         block.appendChild(rowDiv);
       });
 
@@ -242,6 +244,7 @@
     });
   }
 
+  // Generates chapterMerge layout UI and updates round preview dynamically
   window.syncMarketplaceContentWithRounds = function (roundCount, readonlyMode = false) {
     const container = document.getElementById("edit-content");
     if (!container) return;
@@ -352,9 +355,10 @@
     container.appendChild(chapterWrapper);
   };
 
+  // Generates lessonMerge layout UI with level and lesson grouping
   window.syncMarketplaceContentWithRounds_lessonMerge = function(roundCount, readonlyMode = false) {
     // if preview box is freely editable
-    const isFreeEdit = editingTarget?.layout === "lessonMergeFree";
+    const isFreeEdit = !readonlyMode && editingTarget?.layout === "lessonMergeFree";
     
     const container = document.getElementById("edit-content");
     if (!container) return;
@@ -396,7 +400,6 @@
       const previewTextarea = document.createElement("textarea");
       previewTextarea.rows = 4;
       previewTextarea.className = "round-preview";
-      //previewTextarea.readOnly = true;
       previewTextarea.spellcheck = false;
 
       function renderPreview() {
@@ -420,61 +423,71 @@
       };
 
       // Keyboard deletion logic
-      if (!isFreeEdit) {
-        previewTextarea.onkeydown = (e) => {
-          // Debugging: Output should now be visible in Edge
-          //console.log("Key pressed:", e.key);
+      if (readonlyMode) {
+        // View mode: fully read-only (no deletion, no typing)
+        previewTextarea.readOnly = true;
 
+        // Block all non-modifier keys to prevent deleting selected text
+        previewTextarea.onkeydown = (e) => {
+          // Allow copy/select-all shortcuts
+          if (e.ctrlKey || e.metaKey) return;
+          e.preventDefault();
+        };
+
+        // Extra safety: ignore any input event (some browsers can still trigger it)
+        previewTextarea.oninput = null;
+
+      } else if (!isFreeEdit) {
+        // Edit mode (auto): allow only deleting whole selected lines, block other typing
+        previewTextarea.onkeydown = (e) => {
           const selStart = previewTextarea.selectionStart ?? 0;
           const selEnd = previewTextarea.selectionEnd ?? 0;
           const hasSelection = selStart !== selEnd;
 
-          // Allow modifier keys (e.g., Ctrl+C, Ctrl+A)
+          // Allow modifier keys (Ctrl+C, Ctrl+A, etc.)
           if (e.ctrlKey || e.metaKey) return;
 
-          // Handle deletion logic
           if (e.key === "Delete" || e.key === "Backspace") {
-              if (hasSelection) {
-                  e.preventDefault();
+            if (hasSelection) {
+              e.preventDefault();
 
-                  const full = previewTextarea.value;
-                  const lines = full.split("\n");
+              const full = previewTextarea.value;
+              const lines = full.split("\n");
 
-                  const startLine = full.slice(0, selStart).split("\n").length - 1;
-                  const endLine = full.slice(0, selEnd).split("\n").length - 1;
+              const startLine = full.slice(0, selStart).split("\n").length - 1;
+              const endLine = full.slice(0, selEnd).split("\n").length - 1;
 
-                  const from = Math.min(startLine, endLine);
-                  const to = Math.max(startLine, endLine);
+              const from = Math.min(startLine, endLine);
+              const to = Math.max(startLine, endLine);
 
-                  lines.splice(from, to - from + 1);
+              lines.splice(from, to - from + 1);
 
-                  // Update data source and redraw
-                  if (!draftData.roundMergedValue) draftData.roundMergedValue = {};
-                  draftData.roundMergedValue[round] = lines.length ? lines.map(w => `${w};`).join(" ") : "";
-                  
-                  renderPreview();
-              } else {
-                  // Prevent default deletion if no selection exists to avoid accidental character removal
-                  e.preventDefault();
-              }
-              return;
+              if (!draftData.roundMergedValue) draftData.roundMergedValue = {};
+              draftData.roundMergedValue[round] = lines.length
+                ? lines.map(w => `${w};`).join(" ")
+                : "";
+
+              renderPreview();
+            } else {
+              e.preventDefault();
+            }
+            return;
           }
 
-          // Block all other inputs (characters, space, enter, etc.)
-          // This simulates a "read-only" state while keeping the element interactive
+          // Block all other typing
           e.preventDefault();
         };
       } else {
+        // Edit mode (free): fully editable, update draft on input
         previewTextarea.oninput = () => {
           const lines = previewTextarea.value
             .split("\n")
             .map(s => s.trim())
             .filter(Boolean);
 
-          draftData.roundMergedValue[round] =
-            lines.length
-              ? lines.map(w => `${w};`).join(" ")
-              : "";
+          draftData.roundMergedValue[round] = lines.length
+            ? lines.map(w => `${w};`).join(" ")
+            : "";
         };
       }
 
@@ -664,28 +677,7 @@
       : "";
   }
 
-  // Combine all word strings to output - Lesson Merge Layout
-  function generateRoundMergedString_lessonMerge(round) {
-    if (!draftData.roundMap || !draftData.lessonContentMap) return "";
-
-    const selected = draftData.roundMap[round]?.selectedLessons || [];
-    const merged = [];
-
-    selected.forEach(code => {
-      const parsed = parseLessonCode(code);
-      if (!parsed) return;
-
-      const { level, lesson } = parsed;
-      const words = getLessonWords(level, lesson);
-
-      if (words.length) merged.push(...words);
-    });
-
-    return merged.length
-      ? merged.map(w => `${w};`).join(" ")
-      : "";
-  }
-
+  // Serializes chapterMerge selection data into selected.csv format
   function collectSelectedCSV() {
     if (!draftData.chapterMap) return "round,selected,value\n";
 
@@ -705,6 +697,7 @@
     return "round,selected,value\n" + rows.join("\n");
   }
 
+  // Serializes lessonMerge selection data into selected.csv format
   function collectSelectedCSV_lessonMerge() {
     if (!draftData.roundMap) return "round,selected,value\n";
 
@@ -723,6 +716,84 @@
     return "round,selected,value\n" + rows.join("\n");
   }
 
+  async function prepareMarketplaceDraftData(game) {
+    draftData.rounds = game.rounds;
+
+    // Load selected.csv
+    let selectedRows = await loadMarketplaceSelectedCSV(game);
+
+    if (selectedRows) {
+      draftData.savedMergedMap = {};
+
+      if (game.layout?.startsWith("lessonMerge")) {
+        draftData.roundMap = {};
+        draftData.roundMergedValue = {};
+
+        selectedRows.forEach(r => {
+          const round = Number(r.round);
+          const selected = (r.selected || "")
+            .split("|")
+            .map(s => s.trim())
+            .filter(Boolean);
+
+          draftData.roundMap[round] = { selectedLessons: selected };
+
+          let raw = r.value || "";
+          if (raw.startsWith('"') && raw.endsWith('"')) {
+            raw = raw.slice(1, -1);
+          }
+
+          draftData.roundMergedValue[round] = raw;
+        });
+      } else {
+        draftData.chapterMap = {};
+
+        selectedRows.forEach(r => {
+          const round = Number(r.round);
+          const selectedArr = (r.selected || "")
+            .split("|")
+            .map(n => Number(n));
+
+          draftData.chapterMap[round] = [false, false, false, false, false, false];
+
+          selectedArr.forEach(ch => {
+            if (ch >= 1 && ch <= 6) {
+              draftData.chapterMap[round][ch - 1] = true;
+            }
+          });
+
+          draftData.savedMergedMap[round] = r.value || "";
+        });
+      }
+    }
+
+    // Load content.csv
+    let contentRows = await loadMarketplaceContentCSV(game);
+
+    if (contentRows) {
+      if (game.layout?.startsWith("lessonMerge")) {
+        draftData.lessonContentMap = {};
+
+        contentRows.forEach(r => {
+          const level = Number(r.level);
+          const lesson = Number(r.lesson);
+
+          if (!draftData.lessonContentMap[level]) {
+            draftData.lessonContentMap[level] = {};
+          }
+
+          draftData.lessonContentMap[level][lesson] = r.value || "";
+        });
+      } else {
+        draftData.contentMap = {};
+
+        contentRows.forEach(r => {
+          draftData.contentMap[Number(r.chapter)] = r.value || "";
+        });
+      }
+    }
+  }
+
   // Bind actions with interactctive UI components
   function bindMarketplaceInteractiveUI(row, game) {
     // "Edit" Button
@@ -731,10 +802,12 @@
         title: "Modify Game",
         desc: "You are about to modify this game. This change will take effect immediately.",
         onConfirm: async () => {
+
           const fields = await getEditorFieldsFromRules(game);
           const contentKeys = [];
           currentContentKeys = contentKeys;
 
+          // Open modal first
           openEditModal({
             title: `Edit ${game.title}`,
             data: game,
@@ -745,7 +818,7 @@
                   ...game,
                   ...updatedGame
                 };
-                
+
                 const selectedCSV =
                   finalGame.layout?.startsWith("lessonMerge")
                     ? collectSelectedCSV_lessonMerge()
@@ -759,96 +832,17 @@
                 });
 
                 showFooterMessage("✓ Saved to CSV");
+
               } catch (e) {
                 alert("Save failed. Check server.");
               }
             }
           });
 
-          draftData.rounds = game.rounds;
+          // Unified initialization (replaces 150 lines of duplicated logic)
+          await prepareMarketplaceDraftData(game);
 
-          let selectedRows = await loadMarketplaceSelectedCSV(game);
-
-          if (selectedRows) {
-            draftData.savedMergedMap = {};
-
-            // lessonMerge: selected.csv uses lesson codes like 1-01|3-02
-            if (game.layout?.startsWith("lessonMerge")) {
-              draftData.roundMap = {};
-              ensureRoundMergedValue();
-              draftData.roundMergedValue = {};
-
-              selectedRows.forEach(r => {
-                const round = Number(r.round);
-                const selected = (r.selected || "").split("|").map(s => s.trim()).filter(Boolean);
-
-                draftData.roundMap[round] = { selectedLessons: selected };
-
-                let raw = r.value || "";
-                if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
-
-                const cleaned = raw
-                  .split(/[|;\n,，；]+/)
-                  .map(s => s.trim())
-                  .filter(Boolean)
-                  .map(w => `${w};`)
-                  .join(" ");
-
-                draftData.roundMergedValue[round] = cleaned;
-              });
-            } 
-            // chapterMerge: keep old behavior
-            else {
-              draftData.chapterMap = {};
-
-              selectedRows.forEach(r => {
-                const round = Number(r.round);
-                const selectedArr = (r.selected || "")
-                  .split("|")
-                  .map(n => Number(n));
-
-                draftData.chapterMap[round] = [false, false, false, false, false, false];
-
-                selectedArr.forEach(ch => {
-                  if (ch >= 1 && ch <= 6) {
-                    draftData.chapterMap[round][ch - 1] = true;
-                  }
-                });
-
-                let raw = r.value || "";
-                if (raw.startsWith('"') && raw.endsWith('"')) raw = raw.slice(1, -1);
-                draftData.savedMergedMap[round] = raw;
-              });
-            }
-          }
-
-          let contentRows = await loadMarketplaceContentCSV(game);
-
-          if (contentRows) {
-            // lessonMerge: content.csv headers are level,lesson,value
-            if (game.layout?.startsWith("lessonMerge")) {
-              draftData.lessonContentMap = {};
-
-              contentRows.forEach(r => {
-                const level = Number(r.level);
-                const lesson = Number(r.lesson);
-                if (!level || !lesson) return;
-
-                if (!draftData.lessonContentMap[level]) draftData.lessonContentMap[level] = {};
-                draftData.lessonContentMap[level][lesson] = r.value || "";
-              });
-            } 
-            // chapterMerge: keep old behavior (content.csv headers are chapter,value)
-            else {
-              draftData.contentMap = {};
-
-              contentRows.forEach(r => {
-                const chapter = Number(r.chapter);
-                draftData.contentMap[chapter] = r.value || "";
-              });
-            }
-          }
-
+          // Render layout after draftData is ready
           if (game.layout?.startsWith("lessonMerge")) {
             syncMarketplaceContentWithRounds_lessonMerge(draftData.rounds);
           } else {
@@ -865,12 +859,13 @@
         desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
-            await restoreCSV(`marketplace/${game.key}`);
-            await marketplaceController.reloadAndRedraw(async () => {
-              mpgames = await loadMarketplaceFromCSV();
-              return mpgames;
-            });
-            showFooterMessage("✓ Restored to Safe Version");
+            const ok = await restoreCSV(`marketplace/${game.key}`);
+            if (ok) {
+              await marketplaceController.reloadAndRedraw(async () => {
+                mpgames = await loadMarketplaceFromCSV();
+                return mpgames;
+              });
+            }
           } catch (e) {
             alert("Restore failed. Check server.");
           }
@@ -891,29 +886,8 @@
     // };
 
     // "View" Button
-    row.querySelector(".view").onclick = async() => {
+    row.querySelector(".view").onclick = async () => {
       const fields = await getEditorFieldsFromRules(game);
-
-      const contentKeys = [];
-      currentContentKeys = contentKeys;
-
-      if (await hasMarketplaceContentCSV(game)) {
-        let label = "Content";
-
-        if (game.key.toLowerCase().includes("sentence")) label = "Sentences";
-        else label = "Words";
-
-        contentKeys.push({ key: "content", label });
-      }
-
-      const contents = {};
-
-      if (contentKeys.length > 0) {
-        const rows = await loadMarketplaceContentCSV(game);
-        if (rows) {
-          contents["content"] = rows;
-        }
-      }
 
       openEditModal({
         title: `View ${game.title}`,
@@ -922,12 +896,12 @@
         readonlyMode: true
       });
 
-      renderEditorContent(contents, contentKeys, true);
-      
+      await prepareMarketplaceDraftData(game);
+
       if (game.layout?.startsWith("lessonMerge")) {
-        syncMarketplaceContentWithRounds_lessonMerge(game.rounds, true);
+        syncMarketplaceContentWithRounds_lessonMerge(draftData.rounds, true);
       } else {
-        syncMarketplaceContentWithRounds(game.rounds, true);
+        syncMarketplaceContentWithRounds(draftData.rounds, true);
       }
     };
 
@@ -936,7 +910,6 @@
     if (toggle) {
       toggle.onchange = () => {
         game.active = toggle.checked;
-        console.log("Game active changed:", game.title, game.active);
       };
     }
   }
@@ -947,7 +920,6 @@
 
   (() => {
     const panel = getPanel();
-
     if (panel !== PANEL.MARKETPLACE) return;
 
     async function initMarketplacePage() {

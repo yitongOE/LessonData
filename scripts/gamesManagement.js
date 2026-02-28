@@ -2,7 +2,6 @@
   //#region ====== Variables ======
 
   let rvgames = [];
-  let panelKeys = [];
   let panelKeySet = new Set();
   let currentContentKeys = [];
   let gamesController = null;
@@ -11,27 +10,27 @@
 
   //#region ====== CSV ======
 
+  // Loads GameElementRule.csv and extracts keys used in panel display
   async function loadGameElementRules() {
     const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
 
-    panelKeys = [];
     panelKeySet.clear();
 
     rows.forEach(r => {
       if (r.inPanel === "true") {
-        panelKeys.push(r.key);
         panelKeySet.add(r.key);
       }
     });
   }
 
+  // Reads table header configuration from DOM and returns ordered data keys
   function getPanelHeaderKeys() {
-  const ths = document
-    .querySelectorAll("#thead-games th[data-key]");
+    const ths = document.querySelectorAll("#thead-games th[data-key]");
 
     return Array.from(ths).map(th => th.dataset.key);
   }
 
+  // Loads all game config.csv files and converts them into structured game objects
   async function loadGamesFromCSV() {
     const gameDirs = [
       "WordSplash",
@@ -58,6 +57,7 @@
     return games;
   }
 
+  // Checks whether a content.csv file exists for a given game
   async function hasGameContentCSV(game) {
     const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/content.csv`;
     try {
@@ -68,6 +68,7 @@
     }
   }
 
+  // Loads game content.csv and returns parsed rows
   async function loadGameContentCSV(game) {
     const url = `https://lessondatamanagement.blob.core.windows.net/lessondata/current/games/${game.key}/content.csv?t=${Date.now()}`;
 
@@ -126,6 +127,7 @@
     return html;
   }
 
+  // Generates editor field schema based on GameElementRule.csv
   async function getEditorFieldsFromRules(game) {
     const rows = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/GameElementRule.csv?t=" + Date.now());
 
@@ -168,17 +170,21 @@
     });
   }
 
+  // Renders content blocks inside edit modal based on loaded content data
   function renderEditorContent(contents, contentKeys, readonlyMode = false) {
     const container = document.getElementById("edit-content");
     if (!container) return;
 
+    // Clear previous content and exit if empty
     container.innerHTML = "";
     if (Object.keys(contents).length === 0) return;
 
+    // Create title for content section
     const title = document.createElement("h3");
     title.textContent = "Content";
     container.appendChild(title);
 
+    // Render content blocks grouped by content key
     contentKeys.forEach(({ key, label }) => {
       const rows = contents[key];
       if (!rows) return;
@@ -190,6 +196,7 @@
       h4.textContent = label;
       block.appendChild(h4);
 
+      // Create textarea rows for each level entry
       rows.forEach(r => {
         const level = Number(r.level);
 
@@ -201,7 +208,6 @@
         textarea.dataset.level = r.level;
         textarea.rows = 3;
         textarea.value = csvToTextarea(r.value);
-        textarea.style.width = "100%";
 
         if (readonlyMode) {
           textarea.disabled = true;
@@ -210,7 +216,6 @@
 
         rowDiv.appendChild(document.createElement("div")).textContent = `Level ${level}`;
         rowDiv.appendChild(textarea);
-
         block.appendChild(rowDiv);
       });
 
@@ -218,6 +223,7 @@
     });
   }
 
+  // Dynamically generates editable content UI based on selected level range
   window.syncGameContentWithLevels = function (levelCount, readonlyMode = false) {
     const container = document.getElementById("edit-content");
     if (!container) return;
@@ -238,48 +244,39 @@
       const startIndex = (eduLevel - 1) * 6 + 1;
       const endIndex = startIndex + 5;
 
+      // Generate collapsible lesson section
       for (let i = startIndex; i <= endIndex; i++) {
         const row = document.createElement("div");
         row.className = "content-row";
-        row.style.marginBottom = "18px";
+        row.classList.add("lesson-row");
 
-        // ===== Lesson header =====
+        // Lesson header
         const header = document.createElement("div");
-        header.style.display = "flex";
-        header.style.justifyContent = "space-between";
-        header.style.alignItems = "center";
-        header.style.cursor = "pointer";
+        header.classList.add("lesson-header");
 
         const lessonTitle = document.createElement("div");
         lessonTitle.className = "lesson-range-title";
         const startLesson = (i - 1) * 5 + 1;
         const endLesson = startLesson + 4;
         lessonTitle.textContent = `Lesson ${startLesson}-${endLesson}`;
-        lessonTitle.style.fontSize = "13px";
-        lessonTitle.style.fontWeight = "600";
-        lessonTitle.style.color = "#666";
-        lessonTitle.style.margin = "0";
+        lessonTitle.className = "lesson-range-title";
 
         const toggleBtn = document.createElement("button");
         toggleBtn.type = "button";
         toggleBtn.textContent = "▾";
-        toggleBtn.style.border = "none";
-        toggleBtn.style.background = "transparent";
-        toggleBtn.style.fontSize = "16px";
-        toggleBtn.style.cursor = "pointer";
+        toggleBtn.classList.add("lesson-toggle-btn");
 
         header.appendChild(lessonTitle);
         header.appendChild(toggleBtn);
 
-        // ===== Content =====
+        // Content
         const contentWrapper = document.createElement("div");
-        contentWrapper.style.marginTop = "6px";
+        contentWrapper.classList.add("lesson-content-wrapper");
 
         const textarea = document.createElement("textarea");
         textarea.dataset.contentKey = key;
         textarea.dataset.level = i;
         textarea.rows = 3;
-        textarea.style.width = "100%";
 
         const rowData = allContentRows.find(r => Number(r.level) === i);
         textarea.value = csvToTextarea(rowData?.value);
@@ -306,8 +303,7 @@
           });
         }
 
-        const isSentenceScramble =
-          window.currentEditingGameKey === "SentenceScramble";
+        const isSentenceScramble = window.currentEditingGameKey === "SentenceScramble";
 
         if (!isSentenceScramble || readonlyMode) {
           textarea.disabled = true;
@@ -326,14 +322,14 @@
 
         contentWrapper.appendChild(textarea);
 
-        // ===== Fold-textbox Button =====
+        // Fold-textbox Button
         let collapsed = true;
-        contentWrapper.style.display = "none";
+        contentWrapper.classList.add("collapsed");
         toggleBtn.textContent = "▸";
 
         const toggle = () => {
           collapsed = !collapsed;
-          contentWrapper.style.display = collapsed ? "none" : "block";
+          contentWrapper.classList.toggle("collapsed", collapsed);
           toggleBtn.textContent = collapsed ? "▸" : "▾";
         };
 
@@ -416,7 +412,13 @@
         desc: "This will restore the game to the most recent safe version. Any unsaved changes will be lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
-            await restoreCSV(`games/${game.key}`);
+            const ok = await restoreCSV(`games/${game.key}`);
+            if (ok) {
+              await gamesController.reloadAndRedraw(async () => {
+                rvgames = await loadGamesFromCSV();
+                return rvgames;
+              });
+            }
           } catch (e) {
             alert("Restore failed. Check server.");
           }
@@ -465,7 +467,7 @@
 
       openEditModal({
         title: `View ${game.title}`,
-        data: game,
+        data: { ...game, content: contents["content"] },
         fields,
         readonlyMode: true
       });
@@ -479,7 +481,6 @@
     if (toggle) {
       toggle.onchange = () => {
         game.active = toggle.checked;
-        console.log("Game active changed:", game.title, game.active);
       };
     }
   }

@@ -10,18 +10,12 @@
 
   //#region ====== CSV ======
 
+  // Loads AdminData.csv from Azure Blob Storage and parses it into structured admin objects
   async function loadAdminsFromCSV() {
     const url = "https://lessondatamanagement.blob.core.windows.net/lessondata/current/AdminData.csv" + "?t=" + Date.now();
-    
     const res = await fetch(url, { cache: "no-store" });
     const text = await res.text();
-
-    const lines = text
-      .replace(/\r\n/g, "\n")
-      .replace(/\r/g, "\n")
-      .split("\n")
-      .filter(line => line.trim() !== "");
-
+    const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter(line => line.trim() !== "");
     const headers = lines[0].split(",").map(h => h.trim());
 
     return lines.slice(1).map(line => {
@@ -140,7 +134,13 @@
         desc: "This will restore ALL the admin accounts to the most recent safe version. ALL changes since last safe version will be lost. This action takes effect immediately.",
         onConfirm: async () => {
           try {
-            await restoreCSV("AdminData");
+            const ok = await restoreCSV("AdminData");
+            if (ok) {
+              await adminsController.reloadAndRedraw(async () => {
+                admins = await loadAdminsFromCSV();
+                return admins;
+              });
+            }
           } catch (e) {
             alert("Restore failed. Check server.");
           }

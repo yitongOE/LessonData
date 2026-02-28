@@ -52,7 +52,6 @@ const PERMISSIONS = {
 };
 const FUNCTION_BASE = "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net";
 
-let currentPanel = null;
 let pendingAction = null;
 
 //#endregion
@@ -98,10 +97,11 @@ async function checkLogin() {
   }
 }
 
+// Determines the role of logged-in user
 async function determineUserRole(user) {
-
   const admins = await loadCSV("https://lessondatamanagement.blob.core.windows.net/lessondata/current/AdminData.csv" + "?t=" + Date.now());
 
+  // Make sure email address matched and account is active
   const record = admins.find(a =>
     a.email.toLowerCase() === user.email.toLowerCase() &&
     a.active === "true"
@@ -113,12 +113,14 @@ async function determineUserRole(user) {
   return record?.role || "QA";
 }
 
+// Shows or hides a single DOM element by id
 function toggle(id, show) {
   const el = document.getElementById(id);
   if (!el) return;
   el.style.display = show ? "" : "none";
 }
 
+// Shows or hides all elements with the specified class name
 function toggleGroup(className, show) {
   document.querySelectorAll(`.${className}`)
     .forEach(el => {
@@ -126,6 +128,7 @@ function toggleGroup(className, show) {
     });
 }
 
+// Applies UI visibility rules based on role permissions and panel
 function applyPermissions(role) {
   const p = PERMISSIONS[role] || PERMISSIONS["QA"];
   const panel = getPanel(); 
@@ -136,6 +139,7 @@ function applyPermissions(role) {
     toggleGroup("gameRestoreBtn", p.restore);
     toggleGroup("gameDeleteBtn", p.delete);
     toggleGroup("gameViewBtn", p.view);
+    toggle("btn-admins", p.adminPanel);
   }
 }
 
@@ -152,9 +156,9 @@ function getPanel() {
 function setupIndexUI({ gamesCount = 0, adminsCount = 0, marketplaceCount = 0 }) {
   const panel = getPanel();
 
-  btnGames.style.display = "";
-  btnMarketplace.style.display = "";
-  btnAdmins.style.display = "";
+  btnGames.classList.remove("hidden");
+  btnMarketplace.classList.remove("hidden");
+  btnAdmins.classList.remove("hidden");
 
   if (panel === PANEL.GAMES) {
     // Header
@@ -197,22 +201,15 @@ function setupIndexUI({ gamesCount = 0, adminsCount = 0, marketplaceCount = 0 })
     theadMarketplace.classList.remove("hidden");
   }
 
-  btnGames.onclick = () => {
-    location.href = "index.html?panel=games";
-  };
-
-  btnMarketplace.onclick = () => {
-    location.href = "index.html?panel=marketplace";
-  };
-
-  btnAdmins.onclick = () => {
-    location.href = "index.html?panel=admins";
-  };
+  // Button clicking binding
+  btnGames.onclick = () => { location.href = "index.html?panel=games"; };
+  btnMarketplace.onclick = () => { location.href = "index.html?panel=marketplace"; };
+  btnAdmins.onclick = () => { location.href = "index.html?panel=admins"; };
 
   return panel;
 }
 
-// Create panel
+// Create panel shell
 function createPanelController({
   panelName,
   loadRules,
@@ -224,6 +221,7 @@ function createPanelController({
   let items = [];
   let footer = null;
 
+  // Updates the item count display in the header
   function updateCount() {
     const countEl = document.getElementById("item-count");
     if (countEl) {
@@ -231,6 +229,7 @@ function createPanelController({
     }
   }
 
+  // Renders current page rows into the table body
   function draw() {
     const tbody = document.getElementById("item-tbody");
     tbody.innerHTML = "";
@@ -247,29 +246,25 @@ function createPanelController({
 
     updateCount();
 
-    if (window.currentRole) {
-      applyPermissions(window.currentRole);
-    }
+    // Apply permissions
+    if (window.currentRole) { applyPermissions(window.currentRole); }
 
-    if (onAfterDraw) {
-      onAfterDraw({ items, footer });
-    }
+    // Optional post-render logic
+    if (onAfterDraw) { onAfterDraw({ items, footer }); }
   }
 
+  // Initializes panel by loading rules and data
   async function init(setupCountsObj) {
     if (loadRules) await loadRules();
-
     items = await loadData();
 
     setupIndexUI(setupCountsObj);
 
-    footer = createFooterController({
-      onPageChange: draw
-    });
-
+    footer = createFooterController({onPageChange: draw});
     footer.setTotalItems(items.length);
   }
 
+  // Reloads data from server and re-renders
   async function reloadAndRedraw(loadFn) {
     items = await (loadFn ? loadFn() : loadData());
     footer.setTotalItems(items.length);
@@ -283,6 +278,7 @@ function createPanelController({
 
 //#region ====== Footer ======
 
+// Creates pagination shell
 function createFooterController({ onPageChange }) {
   let currentPage = 1;
   let rowsPerPage = 10;
@@ -290,16 +286,17 @@ function createFooterController({ onPageChange }) {
 
   const rowsSelect = document.getElementById("rows-per-page");
   const rowRange = document.getElementById("row-range");
-
   const btnFirst = document.getElementById("first-page");
   const btnPrev = document.getElementById("prev-page");
   const btnNext = document.getElementById("next-page");
   const btnLast = document.getElementById("last-page");
 
+  // Calculates total number of pages based on item count and rows per page
   function getTotalPages() {
     return Math.max(1, Math.ceil(totalItems / rowsPerPage));
   }
 
+  // Display row ranges of total (like: 1-10 of 20)
   function updateRowRange() {
     if (totalItems === 0) {
       rowRange.textContent = "0–0 of 0";
@@ -311,6 +308,7 @@ function createFooterController({ onPageChange }) {
     rowRange.textContent = `${start}–${end} of ${totalItems}`;
   }
 
+  // Toggle buttons availability according to current page index
   function updateButtons() {
     const totalPages = getTotalPages();
     btnFirst.disabled = currentPage === 1;
@@ -319,6 +317,7 @@ function createFooterController({ onPageChange }) {
     btnLast.disabled = currentPage === totalPages;
   }
 
+  // Navigates to a specific page and triggers redraw callback
   function goToPage(page) {
     const totalPages = getTotalPages();
     currentPage = Math.min(Math.max(1, page), totalPages);
@@ -327,12 +326,14 @@ function createFooterController({ onPageChange }) {
     updateButtons();
   }
 
+  // Change display when dropdown changes
   rowsSelect.onchange = () => {
     rowsPerPage = Number(rowsSelect.value);
     currentPage = 1;
     goToPage(currentPage);
   };
 
+  // Button clicking binding
   btnFirst.onclick = () => goToPage(1);
   btnPrev.onclick = () => goToPage(currentPage - 1);
   btnNext.onclick = () => goToPage(currentPage + 1);
@@ -351,14 +352,37 @@ function createFooterController({ onPageChange }) {
   };
 }
 
+// Displays temporary footer message (success or error)
+window.showFooterMessage = function(message, type = "success", duration = 2000) {
+  const el = document.getElementById("footer-message");
+  if (!el) return;
+
+  el.textContent = message;
+  el.classList.remove("hidden", "error");
+  el.classList.add("show");
+
+  if (type === "error") {
+    el.classList.add("error");
+  }
+
+  clearTimeout(el._timer);
+
+  el._timer = setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => {
+      el.classList.add("hidden");
+    }, 250);
+  }, duration);
+};
+
 //#endregion
 
 //#region ====== Action Confirmation Modal ======
 
+// Opens confirmation modal before executing sensitive actions
 function openActionModal({ title, desc, onConfirm }) {
   modalTitle.textContent = title;
   modalDesc.textContent = desc;
-
   awareCheckbox.checked = false;
   confirmBtn.disabled = true;
   modal.classList.remove("hidden");
@@ -390,6 +414,7 @@ confirmBtn.onclick = () => {
 let editingTarget = null;
 let draftData = null;
 
+// Opens dynamic edit modal based on provided field schema
 function openEditModal({ title, data, fields, onSave, readonlyMode = false }) {
   editingTarget = data;
   draftData = structuredClone(data);
@@ -448,7 +473,14 @@ function openEditModal({ title, data, fields, onSave, readonlyMode = false }) {
       });
 
       input.onchange = e => {
-        draftData[field.key] = Number(e.target.value);
+        const value = e.target.value;
+
+        // Only convert to number for numeric fields
+        if (field.key === "levels" || field.key === "rounds" || field.key === "eduLevel") {
+          draftData[field.key] = Number(value);
+        } else {
+          draftData[field.key] = value;
+        }
 
         if (typeof syncGameContentWithLevels === "function") {
           syncGameContentWithLevels(draftData.levels);
@@ -539,12 +571,14 @@ function openEditModal({ title, data, fields, onSave, readonlyMode = false }) {
   };
 }
 
+// Closes edit modal and clears temporary editing state
 function closeEditModal() {
   document.getElementById("edit-modal").classList.add("hidden");
   editingTarget = null;
   draftData = null;
 }
 
+// Fetches and parses a CSV file into an array of objects
 async function loadCSV(url) {
   const res = await fetch(url, { cache: "no-store" });
   const text = await res.text();
@@ -569,6 +603,7 @@ async function loadCSV(url) {
   });
 }
 
+// Splits paragraph text into sentences intelligently
 function splitSentencesSmart(text) {
   if (!text) return "";
 
@@ -581,12 +616,14 @@ function splitSentencesSmart(text) {
     .join("\n");
 }
 
+// Converts semicolon-separated CSV values into multiline textarea format
 function csvToTextarea(value) {
   return (value || "")
     .replace(/;\s*/g, "\n")
     .trim();
 }
 
+// Converts multiline textarea input back into semicolon-separated CSV format
 function textareaToCsv(value) {
   return value
     .split("\n")
@@ -595,6 +632,7 @@ function textareaToCsv(value) {
     .join("; ") + "; ";
 }
 
+// Formats raw marketplace CSV value into a multiline preview string
 function formatMarketplacePreview(value) {
   return (value || "")
     .replace(/\|/g, "\n")
@@ -613,20 +651,7 @@ window.parseValue = function(raw) {
 
 //#region ====== Replace CSV ====== 
 
-function downloadCSV(filename, csvText) {
-  const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
+// Serializes an array of objects into CSV format
 function toCSV(headers, rows) {
   const headerLine = headers.join(",");
 
@@ -643,7 +668,7 @@ function toCSV(headers, rows) {
   return [headerLine, ...bodyLines].join("\n");
 }
 
-// For Games Panel
+// Generates CSV content for a game's level data
 function collectContentCSV(game) {
   const rows = (game.content || [])
     .sort((a, b) => Number(a.level) - Number(b.level));
@@ -652,6 +677,7 @@ function collectContentCSV(game) {
     rows.map(r => `${r.level},${r.value || ""}`).join("\n");
 }
 
+// Saves game configuration and content CSV to Azure backend
 async function saveGamesToServer(game) {
   game.updatedAt = new Date().toLocaleString();
   game.updatedBy = window.currentUser?.email || "unknown";
@@ -666,13 +692,8 @@ async function saveGamesToServer(game) {
     ["lightning_timer", game.lightning_timer || 90],
     ["max_wrong", game.max_wrong || 3],
   ];
-
-  const configCSV =
-    "key,value\n" +
-    configRows.map(r => `${r[0]},${r[1]}`).join("\n");
-
+  const configCSV = "key,value\n" + configRows.map(r => `${r[0]},${r[1]}`).join("\n");
   const contentCSV = collectContentCSV(game);
-
   const contentType = "content";
 
   const res = await fetch(
@@ -696,7 +717,7 @@ async function saveGamesToServer(game) {
   }
 }
 
-// For Marketplace Panel
+// Saves marketplace configuration and selected CSV content
 async function saveMarketplaceToServer(game, selectedCSV) {
   game.updatedAt = new Date().toLocaleString();
   game.updatedBy = window.currentUser?.email || "unknown";
@@ -712,15 +733,7 @@ async function saveMarketplaceToServer(game, selectedCSV) {
     ["max_wrong", game.max_wrong || 3],
     ["layout", game.layout]
   ];
-
-  const configCSV =
-    "key,value\n" +
-    configRows.map(r => `${r[0]},${r[1]}`).join("\n");
-
-  const contentType =
-    game.key.includes("Sentence")
-      ? "sentences"
-      : "words";
+  const configCSV = "key,value\n" + configRows.map(r => `${r[0]},${r[1]}`).join("\n");
 
   const res = await fetch(
     "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveMarketplaceCSV",
@@ -742,7 +755,7 @@ async function saveMarketplaceToServer(game, selectedCSV) {
   }
 }
 
-// For Admins Panel
+// Serializes admin list into CSV and uploads to server
 async function saveAdminsToServer(admins) {
   const headers = [
     "id",
@@ -753,7 +766,6 @@ async function saveAdminsToServer(admins) {
     "role",
     "active"
   ];
-
   const rows = admins.map(a => ({
     id: a.id,
     username: a.username,
@@ -763,7 +775,6 @@ async function saveAdminsToServer(admins) {
     role: a.role,
     active: a.active ? "true" : "false"
   }));
-
   const csv = toCSV(headers, rows);
 
   const res = await fetch("https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/saveAdminsCSV", {
@@ -779,25 +790,30 @@ async function saveAdminsToServer(admins) {
   }
 }
 
-// Restore Safe version
+// Restore Safe version and return success state
 async function restoreCSV(target) {
-  const res = await fetch(
-    "https://oe-game-test-function-aqg4hed8gqcxb6ej.eastus-01.azurewebsites.net/api/restoreSafeCSV",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ target })
+  try {
+    const res = await fetch(
+      `${FUNCTION_BASE}/api/restoreSafeCSV`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ target })
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error("Restore failed");
     }
-  );
 
-  if (!res.ok) {
-    alert("Restore failed");
-    return;
+    showFooterMessage("✓ Restored to Safe Version");
+    return true;
+
+  } catch (err) {
+    console.error(err);
+    showFooterMessage("Restore failed. Check server.", "error", 3000);
+    return false;
   }
-
-  location.reload();
 }
 
 //#endregion

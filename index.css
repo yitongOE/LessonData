@@ -227,6 +227,31 @@ body {
   cursor: default;
 }
 
+.footer-message {
+  position: fixed;
+  bottom: 20px;
+  right: 24px;
+  background: #2e7d32;
+  color: white;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.25s ease;
+  z-index: 9999;
+}
+
+.footer-message.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.footer-message.error {
+  background: #c62828;
+}
+
 /*#endregion */
 
 /*#region ====== Modal Base ====== */
@@ -365,6 +390,47 @@ body {
 
 .modal-actions .danger:disabled {
   opacity: 0.4;
+}
+
+/*#endregion */
+
+/*#region ====== Review Content Editing ====== */
+
+.content-row textarea {
+  width: 100%;
+}
+
+.lesson-row {
+  margin-bottom: 18px;
+}
+
+.lesson-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.lesson-range-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin: 0;
+}
+
+.lesson-toggle-btn {
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.lesson-content-wrapper {
+  margin-top: 6px;
+}
+
+.lesson-content-wrapper.collapsed {
+  display: none;
 }
 
 /*#endregion */
@@ -524,4 +590,4 @@ body {
   height: 320px;
 }
 
-/*#endregion
+/*#endregion */
